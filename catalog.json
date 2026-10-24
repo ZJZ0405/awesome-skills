@@ -9,6 +9,20 @@
       "license": "MIT"
     },
     {
+      "name": "deep-explain",
+      "description": "Explain a mathematical concept or theorem in exhaustive reader-friendly detail, with early textbook statement/definition, concept-specific notation decoding, motivation for each construction, integrated mental-model callouts with transfer examples, worked examples, non-examples, and special attention to steps first-time readers commonly find confusing. Use when the user asks for a very detailed math explanation, a theorem/concept unpacked line by line, special symbols explained, confusing parts clarified, or the motivation behind unusual definitions/proof moves.",
+      "path": "skills/deep-explain",
+      "version": "",
+      "license": "MIT"
+    },
+    {
+      "name": "formula-derivation",
+      "description": "Structures and derives research formulas when the user wants to 推导公式, build a theory line, organize assumptions, turn scattered equations into a coherent derivation, or rewrite theory notes into a paper-ready formula document. Use when the derivation target is not yet fully fixed, the main object still needs to be chosen, or the user needs a coherent derivation package rather than a finished theorem proof.",
+      "path": "skills/formula-derivation",
+      "version": "",
+      "license": "MIT"
+    },
+    {
       "name": "frontend-design",
       "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
       "path": "skills/frontend-design",
@@ -23,9 +37,30 @@
       "license": "MIT"
     },
     {
+      "name": "lean-formalize",
+      "description": "Develop and verify a mathematical proof in Lean, continue an incomplete Lean project, or audit whether it proves the original statement. Connect actual inputs to intermediate lemmas, assemble the target theorem, check its transitive axioms, and provide a reproducible handoff. Use when Lean is requested or a specific proof obligation benefits from formal verification; use proof-writer for ordinary mathematical drafting.",
+      "path": "skills/lean-formalize",
+      "version": "",
+      "license": "MIT"
+    },
+    {
       "name": "mcp-builder",
       "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
       "path": "skills/mcp-builder",
+      "version": "",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "nature-reader",
+      "description": "Create source-grounded Chinese-English paper readers with aligned text, figures, tables, and equations. Use for 全文翻译、中英文对照、论文精读 or source-linked questions about a paper; respect a requested excerpt or question without generating a full reader.",
+      "path": "skills/nature-reader",
+      "version": "2.1.1",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "nature-shared",
+      "description": "Internal shared-reference support package for installed Nature Skills, including nature-writing, nature-polishing, nature-response, nature-reader, and nature-paper2ppt. Do not invoke it as a standalone user workflow. Load only the specific core or journal-format file requested by another Nature skill.",
+      "path": "skills/nature-shared",
       "version": "",
       "license": "Apache-2.0"
     },

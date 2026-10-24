@@ -41,6 +41,20 @@
       "excludePaths": [
         "examples/*.html"
       ]
+    },
+    {
+      "id": "nature",
+      "repo": "Yuan1z0825/nature-skills",
+      "track": "branch:main",
+      "license": "Apache-2.0",
+      "licenseFile": "LICENSE",
+      "paths": [
+        "skills"
+      ],
+      "include": [
+        "nature-reader",
+        "nature-shared"
+      ]
     }
   ]
 }

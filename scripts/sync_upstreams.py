@@ -1027,6 +1027,22 @@ def scan_security(staged, report, upstream_id, name):
                     break
 
 
+def normalize_text_files(staged):
+    """Convert CRLF/CR text files to LF, matching the repo's eol=lf checkout."""
+    for path in sorted(Path(staged).rglob("*")):
+        if path.is_symlink() or not path.is_file():
+            continue
+        if path.name in HASH_IGNORE_FILES or path.suffix == ".pyc":
+            continue
+        try:
+            data = path.read_bytes()
+        except OSError:
+            continue
+        if b"\0" in data[:8192] or b"\r" not in data:
+            continue
+        path.write_bytes(data.replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+
+
 def prepare_skill(candidate, expected_license, license_source, notice_sources, old, commit, stage_root, report):
     staged = Path(stage_root) / candidate.upstream.id / candidate.name
     staged.parent.mkdir(parents=True, exist_ok=True)
@@ -1043,6 +1059,7 @@ def prepare_skill(candidate, expected_license, license_source, notice_sources, o
             if notice.is_file() and not notice.is_symlink():
                 if not is_inside(notice, candidate.path):
                     copy_license(notice, staged / notice.name)
+        normalize_text_files(staged)
         md = staged / "SKILL.md"
         try:
             text = md.read_text(encoding="utf-8")

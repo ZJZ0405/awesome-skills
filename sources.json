@@ -8,6 +8,27 @@
       "commit": "208acba8d412335185b2056fedf54b3405df43fb",
       "path": "archify"
     },
+    "deep-explain": {
+      "source": "https://github.com/panpanc/math-skills/tree/f96707ab1104d52487dbbfecaba8deca2f98a88a/.claude/skills/deep-explain",
+      "license": "MIT",
+      "commit": "f96707ab1104d52487dbbfecaba8deca2f98a88a",
+      "path": "skills/deep-explain",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "added license: MIT frontmatter",
+        "added MIT LICENSE text; the upstream README declares MIT but ships no LICENSE file"
+      ]
+    },
+    "formula-derivation": {
+      "source": "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep/tree/23745b69a14880b5716d1773e5d20f5f1e6ab1d6/skills/formula-derivation",
+      "license": "MIT",
+      "commit": "23745b69a14880b5716d1773e5d20f5f1e6ab1d6",
+      "path": "skills/formula-derivation",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "added license: MIT frontmatter (upstream has no license field)"
+      ]
+    },
     "frontend-design": {
       "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/frontend-design",
       "license": "Apache-2.0",
@@ -19,12 +40,37 @@
       "source": "original",
       "license": "MIT"
     },
+    "lean-formalize": {
+      "source": "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep/tree/23745b69a14880b5716d1773e5d20f5f1e6ab1d6/skills/lean-formalize",
+      "license": "MIT",
+      "commit": "23745b69a14880b5716d1773e5d20f5f1e6ab1d6",
+      "path": "skills/lean-formalize",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "added license: MIT frontmatter (upstream has no license field)",
+        "copied skills/shared-references into the skill and rewrote ../shared-references links to shared-references/"
+      ]
+    },
     "mcp-builder": {
       "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/mcp-builder",
       "license": "Apache-2.0",
       "upstream": "anthropic",
       "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
       "path": "skills/mcp-builder"
+    },
+    "nature-reader": {
+      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6ae86c742705fd968b13c79db1a8518a84089d4/skills/nature-reader",
+      "license": "Apache-2.0",
+      "upstream": "nature",
+      "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
+      "path": "skills/nature-reader"
+    },
+    "nature-shared": {
+      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6ae86c742705fd968b13c79db1a8518a84089d4/skills/nature-shared",
+      "license": "Apache-2.0",
+      "upstream": "nature",
+      "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
+      "path": "skills/nature-shared"
     },
     "shell-review": {
       "source": "original",

@@ -3,7 +3,8 @@
 > 状态：已实现（2026-10-24）。白名单在 [upstreams.json](../upstreams.json)，
 > 同步脚本是 [scripts/sync_upstreams.py](../scripts/sync_upstreams.py)，锁文件是
 > [upstreams.lock.json](../upstreams.lock.json)。当前接入了
-> `anthropics/skills` 的 4 个 Apache-2.0 技能和 `tt-a1i/archify`（MIT）；
+> `anthropics/skills` 的 4 个 Apache-2.0 技能、`tt-a1i/archify`（MIT）和
+> `Yuan1z0825/nature-skills` 的 `nature-reader`/`nature-shared`（Apache-2.0）；
 > 新增上游按第 8 节操作。
 
 ## 1. 目标
@@ -92,6 +93,15 @@ validate.py --strict → catalog.py → test-install.sh → 开 PR
       "paths": ["archify"],
       "include": ["archify"],
       "excludePaths": ["examples/*.html"]
+    },
+    {
+      "id": "nature",
+      "repo": "Yuan1z0825/nature-skills",
+      "track": "branch:main",
+      "license": "Apache-2.0",
+      "licenseFile": "LICENSE",
+      "paths": ["skills"],
+      "include": ["nature-reader", "nature-shared"]
     }
   ]
 }
@@ -159,8 +169,8 @@ validate.py --strict → catalog.py → test-install.sh → 开 PR
 
 - lock 由 sync 生成，不要手改。
 - `commit` 是实际 checkout 的 HEAD，不是 `main` 的别名。
-- `files` 是 vendored 之后的哈希（含补写/改写的 `license` 行和复制的许可证），
-  不是上游原始文件。
+- `files` 是 vendored 之后的哈希（含补写/改写的 `license` 行、复制的许可证和
+  文本文件 CRLF→LF），不是上游原始文件。
 - 不写时间戳，commit 不变时 lock 逐字节稳定；JSON 键按 id/技能/文件名排序。
 - 上游删除技能、或从 `include` 移除技能时，默认保留本地文件并在摘要里标记
   orphaned；`--prune` 只删除与 lock 完全一致的目录。保留的 orphan 仍留在 lock
@@ -209,9 +219,9 @@ python3 scripts/sync_upstreams.py --check            # 只比较 lock 与上游 
 6. license gate：SPDX 白名单、许可证文件存在且非空、复制 `LICENSE`/`NOTICE`，
    必要时补写或改写 `license:`。
 7. 漂移检查：本地文件与 lock 不一致时默认中止；`--force` 才覆盖。
-8. 复制到 `skills/<name>/`，先应用 `excludePaths`，保留可执行位；给
-   `scripts/` 下的 `.sh`/`.bash`/带 shebang 的文件补 `+x`；拒绝符号链接和
-   超大文件。
+8. 复制到 `skills/<name>/`，先应用 `excludePaths`，把文本文件的 CRLF 统一成
+   LF，保留可执行位；给 `scripts/` 下的 `.sh`/`.bash`/带 shebang 的文件补
+   `+x`；拒绝符号链接和超大文件。
 9. 更新 lock/sources，输出 added / updated / unchanged / skipped / orphaned /
    available-not-imported。
 
@@ -274,6 +284,8 @@ sh tests/test-install.sh
   行内代码和 fenced code 块里的链接示例不算链接，不会被误报。
 - `SKILL.md` 超过 500 行、技能目录超过 25 MB、单文件超过 10 MB、包含符号
   链接会被跳过。
+- 文本文件（无 NUL 字节）的 CRLF/CR 会统一成 LF，和 `.gitattributes` 的
+  `eol=lf` 保持一致，避免 CRLF shebang 和 lock 哈希漂移；二进制文件不动。
 - `scripts/` 下的 shell/带 shebang 脚本没有可执行位时，同步补 `+x`；没有
   shebang 的 Python 模块不强制可执行（`validate.py` 也按这个规则检查）。
 - 交叉引用：如果正文出现 `superpowers:writing-plans` 这类“上游 id/技能名:
@@ -384,6 +396,7 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
 | A | 配置、sync 脚本、lock、workflow、docs、测试 | 已完成 |
 | B | 接入 `anthropics/skills` 的 4 个 Apache-2.0 技能 | 已完成 |
 | B2 | 接入 `tt-a1i/archify` v3.2.0（MIT），排除 15 个生成的演示 HTML | 已完成 |
+| B3 | 接入 `Yuan1z0825/nature-skills` 的 `nature-reader`/`nature-shared`（Apache-2.0） | 已完成 |
 | C | 接入 `getsentry/find-bugs` 等通用技能 | 待按需 |
 
 暂缓：`rename`、GitHub App、自动发现、`skills/vendor/` 分层。当前扁平
@@ -402,6 +415,15 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
 | `prisma/skills` | MIT | 仓库根目录 | 按需；Prisma 专用 |
 | `openai/skills` | 逐技能 | `skills/` | 跳过；README 已标 deprecated |
 
+`Yuan1z0825/nature-skills` 细节：
+
+- 只接 `nature-reader` 和它的共享依赖 `nature-shared`，两者都用仓库级
+  Apache-2.0 许可证；同步时会把仓库根 `LICENSE` 复制进技能目录并补
+  `license: Apache-2.0` frontmatter。
+- `nature-reader` 的 `manifest.yaml` 通过 `../nature-shared/...` 引用共享层；
+  两个技能必须一起安装，单独安装 `nature-reader` 会缺共享文件。
+- 上游还有 20 多个 `nature-*` 技能，未列入 `include`；需要时按名字逐个添加。
+
 `tt-a1i/archify` 细节：
 
 - 锁定 `tag:v3.2.0`（MIT）；技能在仓库的 `archify/` 子目录，运行时需要
@@ -418,6 +440,23 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
   `--strict` 拦。
 - 排除：`docx`、`pdf`、`pptx`、`xlsx` 是 source-available；
   `doc-coauthoring` 没有 `LICENSE.txt`。
+
+### 手工快照
+
+下面三个技能来自 MIT 仓库，但无法原样通过 sync 的许可证/可移植性闸门，
+因此按手工快照处理（不走 sync），并在 `sources.json` 记录 commit 和修改。
+它们**不在** `upstreams.json` 里，不会跟随定时任务自动更新。
+
+| 技能 | 来源 | 修改 |
+| --- | --- | --- |
+| `formula-derivation` | `wanshuiyin/auto-claude-code-research-in-sleep` | 补 `license: MIT` 和仓库 `LICENSE` |
+| `lean-formalize` | 同上 | 补 `license: MIT`；把 `skills/shared-references/` 放进技能内，并把 `../shared-references/` 链接改为 `shared-references/` |
+| `deep-explain` | `panpanc/math-skills` | 补 `license: MIT`；上游 README 声明 MIT 但没有 `LICENSE` 文件，仓库内补了标准 MIT 文本 |
+
+`lean-formalize` 里的 `shared-references/` 是上游的共享参考库，随技能一起安装；
+其中少量文档仍指向未打包的 `../citation-audit`、`../skills-codex/` 等 ARIS
+技能，这是上游自带的交叉引用，不影响 Lean 主流程。`formula-derivation` 通过
+`Skill(lean-formalize)` 声明可选依赖，两个技能建议一起安装。
 
 ## 11. 测试
 
@@ -447,6 +486,8 @@ CI 在 Ubuntu/macOS 上都会跑这套测试。
 - 定时任务只读默认分支；改完 `upstreams.json` 要先 merge 到 `main`，或者本地
   手动跑 sync 再提 PR。
 - 手工导入的本地技能用 `import.py`，不要在 `upstreams.json` 里假装是上游。
+- 手工快照（`formula-derivation`、`lean-formalize`、`deep-explain`）更新时按
+  `sources.json` 里的 commit 重新取文件并重放表中列出的修改，不要直接覆盖。
 
 ## 13. 待定
 
@@ -471,3 +512,6 @@ CI 在 Ubuntu/macOS 上都会跑这套测试。
 - [Agent Skills](https://agentskills.io)、[skills.sh](https://skills.sh)
 - [anthropics/skills](https://github.com/anthropics/skills)
 - [tt-a1i/archify](https://github.com/tt-a1i/archify)
+- [Yuan1z0825/nature-skills](https://github.com/Yuan1z0825/nature-skills)
+- [wanshuiyin/auto-claude-code-research-in-sleep](https://github.com/wanshuiyin/auto-claude-code-research-in-sleep)
+- [panpanc/math-skills](https://github.com/panpanc/math-skills)

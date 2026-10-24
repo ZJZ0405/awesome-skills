@@ -259,6 +259,34 @@ class SyncTest(unittest.TestCase):
         self.assert_failed(proc)
         self.assertIn("must not contain '..'", proc.stderr)
 
+    def test_text_files_are_normalized_to_lf(self):
+        work = self.make_repo(
+            "acme/skills",
+            {
+                "LICENSE": LICENSE_MIT,
+                "skills/demo/SKILL.md": skill_md("demo"),
+            },
+        )
+        self.git(work, "config", "core.autocrlf", "false")
+        self.update_repo(
+            "acme/skills",
+            work,
+            {
+                "skills/demo/scripts/check.py": "#!/usr/bin/env python3\r\nprint('ok')\r\n",
+                "skills/demo/data.json": "{\r\n  \"a\": 1\r\n}\r\n",
+                "skills/demo/blob.bin": "\x00\r\n",
+            },
+        )
+        self.set_config([self.base_upstream(["demo"])])
+        self.assert_ok(self.sync())
+
+        demo = self.skill_dir("demo")
+        self.assertNotIn(b"\r", (demo / "scripts" / "check.py").read_bytes())
+        self.assertNotIn(b"\r", (demo / "data.json").read_bytes())
+        self.assertIn(b"\r", (demo / "blob.bin").read_bytes())
+        files = self.lock()["upstreams"]["acme"]["skills"]["demo"]["files"]
+        self.assertIn("scripts/check.py", files)
+
     def test_code_span_links_are_not_portability_errors(self):
         md = skill_md("demo").replace(
             "Body for demo.",

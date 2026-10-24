@@ -268,6 +268,68 @@
           }
         }
       }
+    },
+    "nature": {
+      "repo": "Yuan1z0825/nature-skills",
+      "track": "branch:main",
+      "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
+      "skills": {
+        "nature-reader": {
+          "path": "skills/nature-reader",
+          "license": "Apache-2.0",
+          "files": {
+            "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "README.md": "2e0d2cb22a51c3ba6fe92d0da80dbf89d756c85448cadd9d3215b3e20f36750b",
+            "README_EN.md": "5f34fa9cfd7b3f45647b4451349a42ef4537b89a0fa9c37d487dbfec0dc10d9a",
+            "SKILL.md": "af1afb8a2cc32bc0446fa4994821f60e49032d116cb0d5bfe1a0d6e70eb7ce31",
+            "agents/openai.yaml": "3f51bc49dea2775124ca3db18fa9d0128862b7e4b019003e07b0d55517ac7225",
+            "evals/evals.json": "ca3da72a94e3a773a7b504da87f0e8baba734f30c4b94b937b3eca08a44a884e",
+            "manifest.yaml": "f287b0f61dd096467ee4f670fc9c752b972b9b5d56a5c21397d816c200256051",
+            "references/article-anatomy.md": "f3899789c574577e37c27478673d98e21f8329f37f2e5162ac9e09a0d10a6f14",
+            "references/equation-handling.md": "57cdad3fdb5a1820636edd09b7e4aae3fc0ac8898709da8ed201299a958efa6a",
+            "references/figure-extraction.md": "eba50785ea176c63ba16d2ddfe614c91525b984c5097ce42b6e49a1beef8ebdc",
+            "references/grounding-rules.md": "3e05b8f9c1a76042c993b55474ea1b19757d6aada5fb58722cbed2108119055f",
+            "references/output-spec.md": "81d590eef5d65fc84aeff9be7e7034b5ff92588d2504fbc08d7543547133aaa0",
+            "scripts/validate_reader_math.py": "9a4d5284a11b7487379693b6e3ea7734a7926aedf04be504646492a9d32c19d3",
+            "static/core/output-contract.md": "05d1ffda81d01c3241a7ff6ff3574243c3c967da942f3cd0f0fa12c32891be26",
+            "static/core/principles.md": "b4c0f9ee57b8d83ecee683e4b37637a331562b0b18cf77f249bf8c8975e1bd97",
+            "static/core/workflow.md": "8920654b3e23b6e8a6a729292ec92aab8340ef009421c6073656e4aaf21bb411",
+            "static/fragments/source/doi-arxiv.md": "c8b8d006f04f34b703021d9b76b3e62d17212b839fbe37a11a8e34baf86854d9",
+            "static/fragments/source/html.md": "136a004201a8ad77e7af5ac8233d8a90cd39f33d7349fe215b4a7946e26b995e",
+            "static/fragments/source/pasted-text.md": "bee3ad0473e686b2bc76fe8c532dc967795019f067fefcd84cf7eed82475bb2f",
+            "static/fragments/source/pdf-text.md": "2f61a2253524683fbe899859c944dc86b20be7f1cf95712d1299a769265caef7",
+            "static/fragments/source/scanned-pdf.md": "e0e7a8343c13952befcc674047dff3488eb2e9640c5740299e6b4a4d0a764d47"
+          }
+        },
+        "nature-shared": {
+          "path": "skills/nature-shared",
+          "license": "Apache-2.0",
+          "files": {
+            "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "README.md": "2e42d487b9aa4985933dfb230ac57c88e8dfeba97644bb30d2c222de9a65e61e",
+            "README_EN.md": "1d2fd257264aa512f52dfc131d9adfd67c7dcf2b6f1e3c059c693360b027b245",
+            "SKILL.md": "ae461aaee1116c54609d439bda04dbd39ada20cf5428d57939d6737ac3121f43",
+            "agents/openai.yaml": "4bbf2e58b350269cf231f73ca12af1d097b9d64637023b037e238083151fbd67",
+            "core/consistency-sweep.md": "35a540c10a2c14415b7181588f612e16943cbc4e49f1428010d67c480051f0f9",
+            "core/discussion-argument-language.md": "a3b0ddcadc47efc029e923ae8133ba0bd99e6a6eb27fdbc791d0e1096d98c169",
+            "core/ethics.md": "065db5761d72c295eb1ed5c231deb0b0bcbb0f1065d530f994c044398bd75056",
+            "core/main-text-discipline.md": "d43190c4d617096c1088bb5452cec5b0ae13f5d4947c2b21c28315181f051b8e",
+            "core/nature-abstract.md": "92c0f1e78df5a9b4dc7ad276ed625e371d211124a47a9eed0a4de82c9c1526cb",
+            "core/nature-introduction.md": "813fb8acb9b5c76e9c8f1d8c1616fefa82a1ec949d4aba98935b0485fb4cd4f7",
+            "core/nature-results-discussion.md": "16f1ce1ed6d2aad7853eabf304cdbd661530931747bce4cf3f10b3dfb655adc1",
+            "core/paper-type-taxonomy.md": "84878907fd0416f628c8e3969e583569b9930f0129e6553167112435d93a3ad1",
+            "core/reader-workflow.md": "acf54e59da3cd29d9179748895c7b5ed0da2d948704e97bee83771698ecbe10d",
+            "core/research-compliance.md": "0ac172d2af0c2089acd7280712a89b23a5f232d4e436e9ae78dd501ff30cd855",
+            "core/terminology-ledger.md": "c8ff387fc55439dbec9835d624fb1c1e544cca06ae8d007f8e4f726f68080784",
+            "journal-formats/nat-comms.md": "5a9eef685502e35d2289478d0b3815d5dbfbb6b2ed7d758accedfc7fd930e975",
+            "journal-formats/nature-machine-intelligence.md": "d62a418fbd67841e745f553b98a267b5a01c9445457a07a0121095ce76fad0af",
+            "journal-formats/nature.md": "2c4d007f69b64a2e083f9511748c3726b349a4dce4bfccbdac3bf97d1c1afc10",
+            "manifest.yaml": "c3c4d2f5fcee7889505a3e10c3d5d5d973dd249dfb424581acc4cce52fc89054",
+            "scripts/check_consistency.py": "f20b6c24b5203cdcbfd03c83b2c8b055c49581be06a77e619afb7c1352e62bbf",
+            "tests/test_check_consistency.py": "0e4580287e1da1e2c0125f376e3ec5ec94f3d71ff1699868de5d3c81b96ea4a1"
+          }
+        }
+      }
     }
   }
 }
