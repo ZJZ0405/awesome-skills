@@ -148,7 +148,17 @@ EXAMPLES
 ENVIRONMENT
   AWESOME_SKILLS_HOME   Override the global hub
                         (default: \$HOME/.agents/skills).
+  CLAUDE_CONFIG_DIR     Claude Code config directory; moves its mirror from
+                        \$HOME/.claude to \$CLAUDE_CONFIG_DIR.
+  XDG_CONFIG_HOME       Base directory for XDG tools (crush, goose,
+                        opencode); default \$HOME/.config.
+  CODEX_HOME            Codex config directory, used when detecting Codex
+                        (default: \$HOME/.codex).
   NO_COLOR              Disable colour output.
+
+  Paths in lib/agents.tsv may use \${NAME} or \${NAME:-default}. They are
+  resolved at install time, so relocating an agent's config directory keeps
+  its mirrors aligned with it.
 EOF
 }
 
@@ -294,6 +304,52 @@ tool_field() {
   printf '%s\n' "$1" | cut -f"$2"
 }
 
+# Literal pieces used by expand_path; kept in variables so the parameter
+# expansions below never need a quoted "${" pattern.
+_DOLLAR_BRACE='${'
+_CLOSE_BRACE='}'
+
+# Expand ${NAME} and ${NAME:-default} in an agents.tsv path. A leading "~/"
+# is left alone so tool_target/tool_detected still resolve it against $HOME.
+# Sets PATH_OUT; unset or empty variables fall back to the default.
+expand_path() {
+  local _tpl _out _spec _name _def _var
+  _tpl=${1:-}
+  _out=
+  while [ -n "$_tpl" ]; do
+    case $_tpl in
+      *"$_DOLLAR_BRACE"*)
+        _out=$_out${_tpl%%"$_DOLLAR_BRACE"*}
+        _tpl=${_tpl#*"$_DOLLAR_BRACE"}
+        case $_tpl in
+          *"$_CLOSE_BRACE"*) ;;
+          *) die "invalid path template '$1': missing '}'" ;;
+        esac
+        _spec=${_tpl%%"$_CLOSE_BRACE"*}
+        _tpl=${_tpl#*"$_CLOSE_BRACE"}
+        case $_spec in
+          *:-*) _def=${_spec#*:-} ;;
+          *) _def= ;;
+        esac
+        _name=${_spec%%:*}
+        case $_name in
+          ''|[0-9]*|*[!A-Za-z0-9_]*)
+            die "invalid path template '$1': bad variable name '$_name'"
+            ;;
+        esac
+        eval "_var=\${$_name-}"
+        [ -n "$_var" ] || _var=$_def
+        _out=$_out$_var
+        ;;
+      *)
+        _out=$_out$_tpl
+        _tpl=
+        ;;
+    esac
+  done
+  PATH_OUT=$_out
+}
+
 tool_detected() {
   local _detect _old_ifs _d
   _detect=$1
@@ -310,14 +366,9 @@ tool_detected() {
           return 0
         fi
         ;;
-      '~/'*)
-        if [ -e "$HOME/${_d#\~/}" ]; then
-          IFS=$_old_ifs
-          return 0
-        fi
-        ;;
       *)
-        if [ -e "$_d" ]; then
+        expand_path "$_d"
+        if [ -e "$PATH_OUT" ]; then
           IFS=$_old_ifs
           return 0
         fi
@@ -340,6 +391,8 @@ tool_target() {
     printf ''
     return 0
   fi
+  expand_path "$_p"
+  _p=$PATH_OUT
   case $_p in
     '~/'*) printf '%s/%s\n' "$HOME" "${_p#\~/}" ;;
     /*) printf '%s\n' "$_p" ;;
@@ -1052,8 +1105,10 @@ _print_tool_row() {
   local _row _a _p _g _d
   _row=$1
   _a=$(tool_field "$_row" 1)
-  _p=$(tool_field "$_row" 2)
-  _g=$(tool_field "$_row" 3)
+  expand_path "$(tool_field "$_row" 2)"
+  _p=$PATH_OUT
+  expand_path "$(tool_field "$_row" 3)"
+  _g=$PATH_OUT
   if tool_detected "$(tool_field "$_row" 4)"; then
     _d="yes"
   else

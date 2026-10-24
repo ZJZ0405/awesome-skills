@@ -1,5 +1,8 @@
 # Paths follow the Agent Skills ecosystem (vercel-labs/skills docs/agents.md, MIT).
 # Fields: alias, project dir, global dir, detection (';' separated, cmd: = binary).
+# Cells may use ${NAME} or ${NAME:-default} to follow an agent's own config
+# directory env var; values are resolved by the installer at install time.
+# Only tools that document such a variable use one (no nesting).
 # alias	project	global	detect
 aider-desk	.aider-desk/skills	~/.aider-desk/skills	cmd:aider-desk
 amp	.agents/skills	~/.config/agents/skills	cmd:amp
@@ -11,10 +14,10 @@ astrbot	data/skills	~/.astrbot/data/skills	cmd:astrbot
 autohand-code	.autohand/skills	~/.autohand/skills	cmd:autohand
 augment	.augment/skills	~/.augment/skills	~/.augment
 bob	.bob/skills	~/.bob/skills	~/.bob
-claude-code	.claude/skills	~/.claude/skills	cmd:claude;~/.claude
+claude-code	.claude/skills	${CLAUDE_CONFIG_DIR:-~/.claude}/skills	cmd:claude;${CLAUDE_CONFIG_DIR:-~/.claude}
 openclaw	skills	~/.openclaw/skills	cmd:openclaw
 cline	.agents/skills	~/.agents/skills	~/.agents
-codex	.agents/skills	~/.agents/skills	cmd:codex;~/.codex
+codex	.agents/skills	~/.agents/skills	cmd:codex;${CODEX_HOME:-~/.codex}
 dexto	.agents/skills	~/.agents/skills	cmd:dexto
 fx	.agents/skills	~/.agents/skills	cmd:fx
 kimi-code-cli	.agents/skills	~/.agents/skills	cmd:kimi
@@ -31,7 +34,7 @@ codestudio	.codestudio/skills	~/.codestudio/skills	cmd:codestudio
 command-code	.commandcode/skills	~/.commandcode/skills	cmd:command-code
 continue	.continue/skills	~/.continue/skills	~/.continue
 cortex	.cortex/skills	~/.snowflake/cortex/skills	cmd:cortex
-crush	.crush/skills	~/.config/crush/skills	cmd:crush
+crush	.crush/skills	${XDG_CONFIG_HOME:-~/.config}/crush/skills	cmd:crush
 cursor	.agents/skills	~/.cursor/skills	cmd:cursor;~/.cursor
 deepagents	.agents/skills	~/.deepagents/agent/skills	cmd:deepagents
 devin	.devin/skills	~/.config/devin/skills	cmd:devin
@@ -41,7 +44,7 @@ firebender	.agents/skills	~/.firebender/skills	cmd:firebender
 forgecode	.forge/skills	~/.forge/skills	cmd:forge
 gemini-cli	.agents/skills	~/.gemini/skills	cmd:gemini;~/.gemini
 github-copilot	.agents/skills	~/.copilot/skills	cmd:copilot;~/.copilot
-goose	.goose/skills	~/.config/goose/skills	cmd:goose
+goose	.goose/skills	${XDG_CONFIG_HOME:-~/.config}/goose/skills	cmd:goose
 grok	.grok/skills	~/.grok/skills	cmd:grok
 hermes-agent	.hermes/skills	~/.hermes/skills	cmd:hermes
 inference-sh	.inferencesh/skills	~/.inferencesh/skills	cmd:inferencesh
@@ -58,7 +61,7 @@ minimax-code	.minimax/skills	~/.minimax/skills	cmd:minimax
 mistral-vibe	.vibe/skills	~/.vibe/skills	cmd:vibe
 moxby	.moxby/skills	~/.moxby/skills	cmd:moxby
 mux	.mux/skills	~/.mux/skills	cmd:mux
-opencode	.agents/skills	~/.config/opencode/skills	cmd:opencode;~/.config/opencode
+opencode	.agents/skills	${XDG_CONFIG_HOME:-~/.config}/opencode/skills	cmd:opencode;${XDG_CONFIG_HOME:-~/.config}/opencode
 openhands	.openhands/skills	~/.openhands/skills	cmd:openhands
 ona	.ona/skills	~/.ona/skills	cmd:ona
 posit-assistant	.posit/assistant/skills	~/.posit/assistant/skills	cmd:posit

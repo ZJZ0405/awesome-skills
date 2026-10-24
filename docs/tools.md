@@ -12,7 +12,7 @@
 
 约定：
 
-- **项目路径**相对于项目根，**全局路径**相对于 `$HOME`。
+- **项目路径**相对于项目根，**全局路径**默认相对于 `$HOME`。
 - 全局 hub 是 `~/.agents/skills`，项目 hub 是 `<project>/.agents/skills`。
 - 目标目录等于 hub 的工具不会创建额外镜像，装一次就够。
 - `N/A` 表示该工具不支持这个作用域（例如 Eve 只有项目级路径）。
@@ -20,6 +20,30 @@
   自动探测不到时可以显式 `--tool` 强制安装。
 - 新增工具：在 `lib/agents.tsv` 加一行（别名、项目目录、全局目录、探测方式），
   然后运行 `sh tests/test-install.sh`。
+
+## 配置目录被环境变量改过怎么办
+
+`lib/agents.tsv` 的单元格可以写 `${NAME}` 或 `${NAME:-默认值}`。安装器在**安装时**
+按当前环境解析，所以把 agent 的配置目录用环境变量挪走之后，镜像会跟着落到位：
+
+| 环境变量 | 影响的行 | 说明 |
+| --- | --- | --- |
+| `CLAUDE_CONFIG_DIR` | `claude-code` | 镜像装进 `$CLAUDE_CONFIG_DIR/skills`，不再是 `~/.claude/skills` |
+| `XDG_CONFIG_HOME` | `crush`、`goose`、`opencode` | 基目录从 `~/.config` 换成 `$XDG_CONFIG_HOME` |
+| `CODEX_HOME` | `codex`（仅探测） | Codex 的全局 skills 是共享的 `~/.agents/skills`，只有探测路径跟随 |
+
+变量未设置或为空时回落到默认值（`${VAR:-默认}` 的语义）。**没有**接变量的工具
+（`amp`、`kimchi`、`devin`、`replit`、`gemini-cli` 等）仍按写死的 `~/...` 安装；
+如果你用的工具在官方文档里声明了自己的配置目录变量，把它写进对应单元格即可
+（只加在你确认过语义的工具上，不同工具的变量含义并不一致，有的是替换基目录，
+有的是替换整个 `$HOME`）。模板不支持嵌套，一个单元格里可以有多个 `${...}`。
+
+安装器只在解析后的路径上建链接，所以 `./bin/awesome-skills tools` 会显示**解析后**
+的目录，方便确认变量是否生效。
+
+镜像只在 `install` 时创建，所以改完变量后旧位置的链接不会自动搬走。想清理干净：
+先 `./bin/awesome-skills uninstall --all`（按清单里记录的绝对路径删除），再重新
+`install`；清单按「技能 + 路径」去重，重复安装不会越堆越多。
 
 ## 兼容性
 
@@ -55,7 +79,7 @@ agent 的专有功能，请在 `description` 里写明适用范围。
 | `autohand-code` | `.autohand/skills` | `~/.autohand/skills` |
 | `augment` | `.augment/skills` | `~/.augment/skills` |
 | `bob` | `.bob/skills` | `~/.bob/skills` |
-| `claude-code` | `.claude/skills` | `~/.claude/skills` |
+| `claude-code` | `.claude/skills` | `${CLAUDE_CONFIG_DIR:-~/.claude}/skills` |
 | `openclaw` | `skills` | `~/.openclaw/skills` |
 | `cline` | `.agents/skills` | `~/.agents/skills` |
 | `codex` | `.agents/skills` | `~/.agents/skills` |
@@ -75,7 +99,7 @@ agent 的专有功能，请在 `description` 里写明适用范围。
 | `command-code` | `.commandcode/skills` | `~/.commandcode/skills` |
 | `continue` | `.continue/skills` | `~/.continue/skills` |
 | `cortex` | `.cortex/skills` | `~/.snowflake/cortex/skills` |
-| `crush` | `.crush/skills` | `~/.config/crush/skills` |
+| `crush` | `.crush/skills` | `${XDG_CONFIG_HOME:-~/.config}/crush/skills` |
 | `cursor` | `.agents/skills` | `~/.cursor/skills` |
 | `deepagents` | `.agents/skills` | `~/.deepagents/agent/skills` |
 | `devin` | `.devin/skills` | `~/.config/devin/skills` |
@@ -85,7 +109,7 @@ agent 的专有功能，请在 `description` 里写明适用范围。
 | `forgecode` | `.forge/skills` | `~/.forge/skills` |
 | `gemini-cli` | `.agents/skills` | `~/.gemini/skills` |
 | `github-copilot` | `.agents/skills` | `~/.copilot/skills` |
-| `goose` | `.goose/skills` | `~/.config/goose/skills` |
+| `goose` | `.goose/skills` | `${XDG_CONFIG_HOME:-~/.config}/goose/skills` |
 | `grok` | `.grok/skills` | `~/.grok/skills` |
 | `hermes-agent` | `.hermes/skills` | `~/.hermes/skills` |
 | `inference-sh` | `.inferencesh/skills` | `~/.inferencesh/skills` |
@@ -102,7 +126,7 @@ agent 的专有功能，请在 `description` 里写明适用范围。
 | `mistral-vibe` | `.vibe/skills` | `~/.vibe/skills` |
 | `moxby` | `.moxby/skills` | `~/.moxby/skills` |
 | `mux` | `.mux/skills` | `~/.mux/skills` |
-| `opencode` | `.agents/skills` | `~/.config/opencode/skills` |
+| `opencode` | `.agents/skills` | `${XDG_CONFIG_HOME:-~/.config}/opencode/skills` |
 | `openhands` | `.openhands/skills` | `~/.openhands/skills` |
 | `ona` | `.ona/skills` | `~/.ona/skills` |
 | `posit-assistant` | `.posit/assistant/skills` | `~/.posit/assistant/skills` |

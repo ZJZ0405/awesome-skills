@@ -90,6 +90,20 @@ Copilot、OpenCode、Cline、Windsurf、Zed、Amp、Kimi Code CLI、Warp、DSH �
 
 共享 `~/.agents/skills` 的工具装一次就够；其余工具会从 hub 软链过去。
 
+### 配置目录不在默认位置
+
+安装时按当前环境解析 `lib/agents.tsv` 里的路径模板，所以下面这些变量会改变镜像落点：
+
+| 变量 | 生效范围 |
+| --- | --- |
+| `CLAUDE_CONFIG_DIR` | Claude Code 镜像改到 `$CLAUDE_CONFIG_DIR/skills` |
+| `XDG_CONFIG_HOME` | crush / goose / opencode 的镜像基目录（默认 `~/.config`） |
+| `CODEX_HOME` | 只影响 Codex 的探测路径（它的 skills 仍是共享的 `~/.agents/skills`） |
+
+变量未设置或为空时用默认值。其余工具仍按写死的 `~/...` 安装；想给某个工具接上它
+自己的变量，改 `lib/agents.tsv` 对应单元格即可，写法见
+[docs/tools.md](docs/tools.md)。
+
 ## 这个仓库里有什么
 
 <!-- catalog:start -->

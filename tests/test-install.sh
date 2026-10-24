@@ -286,5 +286,47 @@ case $HELP_OUT in
   *) fail "install.sh: help works" ;;
 esac
 
+# ---------------------------------------------------------------------------
+# 11. Config-directory environment variables
+# ---------------------------------------------------------------------------
+H11=$TESTROOT/h11
+CFG11=$TESTROOT/cfg11
+XDG11=$TESTROOT/xdg11
+mkdir -p "$H11" "$CFG11" "$XDG11"
+
+expect_ok "env: install with CLAUDE_CONFIG_DIR" \
+  env HOME="$H11" CLAUDE_CONFIG_DIR="$CFG11" "$CLI" install \
+  --tool claude-code --skill handoff --quiet
+expect_file "env: hub copy still under HOME" "$H11/.agents/skills/handoff/SKILL.md"
+expect_link_to "env: claude mirror follows CLAUDE_CONFIG_DIR" \
+  "$CFG11/skills/handoff" "$H11/.agents/skills/handoff"
+expect_absent "env: legacy ~/.claude mirror not created" "$H11/.claude/skills/handoff"
+
+expect_ok "env: install with XDG_CONFIG_HOME" \
+  env HOME="$H11" XDG_CONFIG_HOME="$XDG11" "$CLI" install \
+  --tool opencode,goose --skill handoff --quiet
+expect_link_to "env: opencode mirror under XDG_CONFIG_HOME" \
+  "$XDG11/opencode/skills/handoff" "$H11/.agents/skills/handoff"
+expect_link_to "env: goose mirror under XDG_CONFIG_HOME" \
+  "$XDG11/goose/skills/handoff" "$H11/.agents/skills/handoff"
+
+expect_ok "env: empty variable falls back to the default" \
+  env HOME="$H11" CLAUDE_CONFIG_DIR= XDG_CONFIG_HOME= "$CLI" install \
+  --tool claude-code --skill shell-review --quiet
+expect_link_to "env: default claude mirror used when unset" \
+  "$H11/.claude/skills/shell-review" "$H11/.agents/skills/shell-review"
+
+TOOLS_ENV=$(env HOME="$H11" CLAUDE_CONFIG_DIR="$CFG11" "$CLI" tools --tool claude-code 2>&1)
+case $TOOLS_ENV in
+  *"$CFG11/skills"*) pass "env: tools shows the resolved path" ;;
+  *) fail "env: tools shows the resolved path" ;;
+esac
+
+expect_ok "env: uninstall honours the same directories" \
+  env HOME="$H11" CLAUDE_CONFIG_DIR="$CFG11" "$CLI" uninstall \
+  --tool claude-code --skill handoff --quiet
+expect_absent "env: claude mirror removed from CLAUDE_CONFIG_DIR" "$CFG11/skills/handoff"
+expect_file "env: hub copy kept while other skills remain" "$H11/.agents/skills/handoff/SKILL.md"
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
