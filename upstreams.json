@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "upstreams": [
+    {
+      "id": "anthropic",
+      "repo": "anthropics/skills",
+      "track": "branch:main",
+      "license": "per-skill",
+      "licenses": {
+        "frontend-design": "Apache-2.0",
+        "mcp-builder": "Apache-2.0",
+        "skill-creator": "Apache-2.0",
+        "webapp-testing": "Apache-2.0"
+      },
+      "licenseFile": "LICENSE.txt",
+      "paths": [
+        "skills"
+      ],
+      "include": [
+        "frontend-design",
+        "mcp-builder",
+        "skill-creator",
+        "webapp-testing"
+      ]
+    }
+  ]
+}

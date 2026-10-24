@@ -21,6 +21,17 @@ trap 'rm -rf "$TESTROOT"' EXIT HUP INT TERM
 PASS=0
 FAIL=0
 
+# Three managed paths per skill: hub + two tool mirrors.
+SKILL_COUNT=0
+for _skill_md in "$REPO"/skills/*/SKILL.md; do
+  [ -f "$_skill_md" ] || continue
+  case $_skill_md in
+    */.*) continue ;;
+  esac
+  SKILL_COUNT=$((SKILL_COUNT + 1))
+done
+MANIFEST_COUNT=$((SKILL_COUNT * 3))
+
 pass() {
   PASS=$((PASS + 1))
   printf 'ok   %s\n' "$1"
@@ -103,11 +114,11 @@ expect_file "install: nested reference" "$H1/.agents/skills/handoff/references/t
 expect_link_to "install: claude link" "$H1/.claude/skills/handoff" "$H1/.agents/skills/handoff"
 expect_link_to "install: cursor link" "$H1/.cursor/skills/shell-review" "$H1/.agents/skills/shell-review"
 expect_file "install: marker" "$H1/.agents/skills/handoff/.awesome-skills-skill"
-expect_count "install: manifest entries" "$H1/.agents/.awesome-skills/manifest.tsv" 6
+expect_count "install: manifest entries" "$H1/.agents/.awesome-skills/manifest.tsv" "$MANIFEST_COUNT"
 
 # Idempotency
 expect_ok "install: rerun is idempotent" run_q "$H1" install --tool claude-code,cursor --quiet
-expect_count "install: no duplicate manifest entries" "$H1/.agents/.awesome-skills/manifest.tsv" 6
+expect_count "install: no duplicate manifest entries" "$H1/.agents/.awesome-skills/manifest.tsv" "$MANIFEST_COUNT"
 
 # Skill filter
 H1B=$TESTROOT/h1b

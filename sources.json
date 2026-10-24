@@ -1,13 +1,41 @@
 {
   "schemaVersion": 1,
   "skills": {
+    "frontend-design": {
+      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/frontend-design",
+      "license": "Apache-2.0",
+      "upstream": "anthropic",
+      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "path": "skills/frontend-design"
+    },
     "handoff": {
       "source": "original",
       "license": "MIT"
     },
+    "mcp-builder": {
+      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/mcp-builder",
+      "license": "Apache-2.0",
+      "upstream": "anthropic",
+      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "path": "skills/mcp-builder"
+    },
     "shell-review": {
       "source": "original",
       "license": "MIT"
+    },
+    "skill-creator": {
+      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/skill-creator",
+      "license": "Apache-2.0",
+      "upstream": "anthropic",
+      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "path": "skills/skill-creator"
+    },
+    "webapp-testing": {
+      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/webapp-testing",
+      "license": "Apache-2.0",
+      "upstream": "anthropic",
+      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "path": "skills/webapp-testing"
     }
   }
 }

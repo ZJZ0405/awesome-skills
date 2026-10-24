@@ -17,3 +17,6 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Transient swap backups from scripts/sync_upstreams.py
+skills/.awesome-sync-backup-*

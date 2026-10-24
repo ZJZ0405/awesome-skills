@@ -1,0 +1,63 @@
+name: sync-skills
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # 每周一 03:00 UTC = 北京时间 11:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync reviewed upstreams
+        run: python3 scripts/sync_upstreams.py --summary "$RUNNER_TEMP/summary.md"
+
+      - name: Validate skills
+        run: python3 scripts/validate.py --strict
+
+      - name: Regenerate catalog
+        run: python3 scripts/catalog.py
+
+      - name: Generated files are up to date
+        run: python3 scripts/catalog.py --check
+
+      - name: Installer tests
+        run: sh tests/test-install.sh
+
+      - name: Sync tests
+        run: python3 tests/test_sync.py
+
+      - name: Open or update the sync PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          # A PAT is needed for validate.yml to run on the PR (GitHub does not
+          # trigger pull_request for PRs opened with GITHUB_TOKEN). Without the
+          # secret this falls back to GITHUB_TOKEN; the sync job still runs all
+          # checks itself, but the PR will not show the validate check.
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+          branch: chore/sync-skills
+          delete-branch: true
+          title: "chore: sync upstream skills"
+          body-path: ${{ runner.temp }}/summary.md
+          commit-message: "chore: sync upstream skills"
+          add-paths: |
+            skills
+            upstreams.lock.json
+            sources.json
+            README.md
+            catalog.json
+            docs/tools.md

@@ -7,10 +7,13 @@
 - **零依赖安装器** — 纯 POSIX shell，不需要 Node、Python、npm 或网络。
 - **一次安装，多端生效** — 先装进共享 hub，再按工具软链/复制到各自的 skills 目录。
 - **标准格式** — 每个技能是 `skills/<name>/SKILL.md`，与 [Agent Skills](https://agentskills.io) 生态和 `npx skills` 兼容。
-- **可审计** — 安装清单、备份目录、`--dry-run`、`doctor`；绝不静默覆盖别人的文件。
+- **可审计** — 安装清单、上游 lock、备份目录、`--dry-run`、`doctor`；绝不静默覆盖别人的文件。
 - **可搬运** — `scripts/pack.sh` 生成带 SHA-256 的 tar.gz，U 盘/内网拷贝后直接安装。
 
-仓库目前带 2 个原创示例技能，用来演示目录约定和安装链路；把 `skills/` 换成你自己的收藏即可。
+仓库目前带 6 个技能：2 个原创示例（`handoff`、`shell-review`）+ 4 个来自
+`anthropics/skills` 的 Apache-2.0 技能（`frontend-design`、`mcp-builder`、
+`skill-creator`、`webapp-testing`）。第三方技能由白名单和 lock 同步，见
+[docs/upstreams.md](docs/upstreams.md)。
 
 ## 30 秒上手
 
@@ -92,8 +95,12 @@ Copilot、OpenCode、Cline、Windsurf、Zed、Amp、Kimi Code CLI、Warp、DSH �
 <!-- catalog:start -->
 | 技能 | 用途 | 许可证 |
 | :--- | :--- | :--- |
+| [`frontend-design`](skills/frontend-design/) | Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making… | Apache-2.0 |
 | [`handoff`](skills/handoff/) | Write a compact, source-linked handoff note so another session, agent, or machine can resume the work without re-reading the whole conversation. Use when the… | MIT |
+| [`mcp-builder`](skills/mcp-builder/) | Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use… | Apache-2.0 |
 | [`shell-review`](skills/shell-review/) | Review shell scripts for destructive commands, quoting and portability bugs, and offline-install safety before running or shipping them. Use when the user… | MIT |
+| [`skill-creator`](skills/skill-creator/) | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize… | Apache-2.0 |
+| [`webapp-testing`](skills/webapp-testing/) | Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing… | Apache-2.0 |
 <!-- catalog:end -->
 
 ## 目录结构
@@ -108,14 +115,18 @@ awesome-skills/
 │       ├── SKILL.md           # 必需：YAML frontmatter + 指令
 │       ├── references/        # 可选：按需加载的细节
 │       └── scripts/           # 可选：可执行辅助脚本
+├── upstreams.json             # 上游技能白名单
+├── upstreams.lock.json        # 上游 commit + 每个文件的 SHA-256
 ├── scripts/
 │   ├── validate.py            # 校验 frontmatter / 链接 / 目录约定
 │   ├── catalog.py             # 生成 README 表格、catalog.json、docs/tools.md
 │   ├── import.py              # 从本地目录收录技能，记录来源
+│   ├── sync_upstreams.py      # 按白名单同步上游技能
 │   └── pack.sh                # 生成离线 tar.gz + SHA-256
 ├── templates/skill/SKILL.md   # 新技能模板
 ├── tests/test-install.sh      # 安装器回归测试
-├── docs/                      # 离线部署、工具路径、编写指南
+├── tests/test_sync.py         # 上游同步测试（本地 git fixture）
+├── docs/                      # 离线部署、工具路径、编写指南、上游同步
 └── catalog.json               # 机器可读的技能目录
 ```
 
@@ -143,6 +154,25 @@ python3 scripts/import.py ./vendor/some-skill --name my-skill
 `import.py` 会保留原目录的 `LICENSE`，把来源写进 `sources.json`，并拒绝覆盖同名技能（除非 `--force`）。
 
 只允许小写字母、数字和单个连字符；`name` 必须和目录名一致；`description` 最多 1024 字符。详细规则见 [docs/authoring.md](docs/authoring.md)。
+
+## 维护者：同步上游技能
+
+仓库里的第三方技能由白名单 + lock 管理，不手工复制：
+
+```sh
+python3 scripts/sync_upstreams.py --dry-run          # 看计划
+python3 scripts/sync_upstreams.py --upstream anthropic
+python3 scripts/sync_upstreams.py --check            # 上游是否已前进
+python3 scripts/sync_upstreams.py --prune            # 清理上游已删除的技能
+```
+
+- `upstreams.json` 是唯一需要手写的白名单；`upstreams.lock.json` 记录 commit
+  和每个 vendored 文件的 SHA-256，必须提交。
+- vendored 技能视为只读；要改就复制成新名字并移出 `include`。
+- 本地改动会被检测到，默认中止；确认后 `--force` 覆盖。
+- GitHub Actions 每周一开一个 `chore/sync-skills` PR，**不会自动合并**。
+
+完整规则见 [docs/upstreams.md](docs/upstreams.md)。
 
 ## 工作原理
 
@@ -208,5 +238,6 @@ npx skills add ZJZ0405/awesome-skills
 
 ## License
 
-安装器、脚本和文档使用 [MIT](LICENSE)。每个技能保留自己的许可证，见其
-`SKILL.md` 的 `license` 字段和目录内的 `LICENSE` 文件。
+安装器、脚本和文档使用 [MIT](LICENSE)。每个技能保留自己的许可证：原创技能是
+MIT，vendored 的 4 个技能是 Apache-2.0，见各自 `SKILL.md` 的 `license` 字段和
+目录内的 `LICENSE` 文件；来源与 commit 记录在 [sources.json](sources.json)。

@@ -132,6 +132,19 @@ description: Review a diff for correctness, security, and missing tests before m
 
 ## 收录第三方技能
 
+公开 Git 仓库里的技能优先走白名单同步（commit、许可证、lock 都可审计）：
+
+```sh
+# 编辑 upstreams.json 的 include
+python3 scripts/sync_upstreams.py --upstream <id> --dry-run
+python3 scripts/sync_upstreams.py --upstream <id>
+```
+
+规则见 [docs/upstreams.md](upstreams.md)。同步进来的技能视为只读，不要直接改；
+要定制就复制成新名字并移出 `include`。
+
+本地目录或一次性导入仍用：
+
 ```sh
 python3 scripts/import.py /path/to/skill
 
@@ -142,7 +155,8 @@ done
 ```
 
 - 先确认许可证允许再分发；保留原 `LICENSE` / `NOTICE`。
-- `sources.json` 记录来源路径和许可证。
+- 同步条目在 `sources.json` 记录 URL、commit 和 SPDX；`import.py` 记录本机
+  路径。
 - 如果技能依赖同仓库的另一个技能（例如 `*-shared`），两个都要收录，并在
   `description` 里写清依赖关系。
 - 不修改原作者的行为，除非在 `metadata` 里注明；改名时同步改 frontmatter。
@@ -152,6 +166,7 @@ done
 ```sh
 python3 scripts/validate.py        # frontmatter、链接、卫生
 python3 scripts/catalog.py         # 更新 README / catalog.json / docs/tools.md
+python3 tests/test_sync.py         # 上游同步（改动 upstreams.json 时）
 sh tests/test-install.sh           # 安装器回归
 ```
 

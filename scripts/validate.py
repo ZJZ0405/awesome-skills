@@ -55,6 +55,21 @@ def check_links(skill):
     return problems
 
 
+def needs_exec_bit(path):
+    """Only files meant to be executed directly need the executable bit.
+
+    A Python module without a shebang is imported, not run; warning about it
+    would reject perfectly portable upstream skills.
+    """
+    if path.suffix in (".sh", ".bash"):
+        return True
+    try:
+        with open(path, "rb") as handle:
+            return handle.read(2) == b"#!"
+    except OSError:
+        return False
+
+
 def check_scripts(skill):
     warnings = []
     scripts = skill.path / "scripts"
@@ -63,7 +78,11 @@ def check_scripts(skill):
     for script in sorted(scripts.rglob("*")):
         if not script.is_file():
             continue
-        if script.suffix in (".sh", ".py", ".bash") and not os.access(str(script), os.X_OK):
+        if (
+            script.suffix in (".sh", ".py", ".bash")
+            and needs_exec_bit(script)
+            and not os.access(str(script), os.X_OK)
+        ):
             warnings.append(
                 "not executable: %s (chmod +x; git tracks the bit)"
                 % script.relative_to(skill.path)

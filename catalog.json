@@ -2,6 +2,13 @@
   "schemaVersion": 1,
   "skills": [
     {
+      "name": "frontend-design",
+      "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
+      "path": "skills/frontend-design",
+      "version": "",
+      "license": "Apache-2.0"
+    },
+    {
       "name": "handoff",
       "description": "Write a compact, source-linked handoff note so another session, agent, or machine can resume the work without re-reading the whole conversation. Use when the user says handoff, 交接, 换会话, 继续做, resume later, or when a long session is ending.",
       "path": "skills/handoff",
@@ -9,11 +16,32 @@
       "license": "MIT"
     },
     {
+      "name": "mcp-builder",
+      "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
+      "path": "skills/mcp-builder",
+      "version": "",
+      "license": "Apache-2.0"
+    },
+    {
       "name": "shell-review",
       "description": "Review shell scripts for destructive commands, quoting and portability bugs, and offline-install safety before running or shipping them. Use when the user asks to review, harden, or debug a .sh script, an installer, a Makefile shell block, or a command containing rm -rf, curl | sh, sudo, or eval.",
       "path": "skills/shell-review",
       "version": "1.0.0",
       "license": "MIT"
+    },
+    {
+      "name": "skill-creator",
+      "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
+      "path": "skills/skill-creator",
+      "version": "",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "webapp-testing",
+      "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
+      "path": "skills/webapp-testing",
+      "version": "",
+      "license": "Apache-2.0"
     }
   ]
 }
