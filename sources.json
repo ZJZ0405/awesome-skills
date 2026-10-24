@@ -40,6 +40,18 @@
       "source": "original",
       "license": "MIT"
     },
+    "html-ppt": {
+      "source": "https://github.com/lewislulu/html-ppt-skill/tree/fd1629067909ff55b36b905476de4e5f26062a1f",
+      "license": "MIT",
+      "commit": "fd1629067909ff55b36b905476de4e5f26062a1f",
+      "path": "skills/html-ppt",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "added license: MIT frontmatter (upstream has none)",
+        "removed docs/ (4.6 MB of README screenshots and GIFs) and scripts/verify-output/ (5.4 MB of generated verification screenshots)",
+        "removed README.md and README.zh-CN.md and the SKILL.md pointer to them, so no link dangles"
+      ]
+    },
     "lean-formalize": {
       "source": "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep/tree/23745b69a14880b5716d1773e5d20f5f1e6ab1d6/skills/lean-formalize",
       "license": "MIT",
@@ -72,6 +84,28 @@
       "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
       "path": "skills/nature-shared"
     },
+    "results-analysis": {
+      "source": "https://github.com/galaxy-dawn/claude-scholar/tree/d394fb599ed9e6ea2212a9e6daa864345fe97a26/skills/results-analysis",
+      "license": "MIT",
+      "commit": "d394fb599ed9e6ea2212a9e6daa864345fe97a26",
+      "path": "skills/results-analysis",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "removed non-portable frontmatter key tags",
+        "added license: MIT frontmatter and the repository LICENSE file"
+      ]
+    },
+    "results-report": {
+      "source": "https://github.com/galaxy-dawn/claude-scholar/tree/d394fb599ed9e6ea2212a9e6daa864345fe97a26/skills/results-report",
+      "license": "MIT",
+      "commit": "d394fb599ed9e6ea2212a9e6daa864345fe97a26",
+      "path": "skills/results-report",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "removed non-portable frontmatter key tags",
+        "added license: MIT frontmatter and the repository LICENSE file"
+      ]
+    },
     "shell-review": {
       "source": "original",
       "license": "MIT"
@@ -82,6 +116,29 @@
       "upstream": "anthropic",
       "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
       "path": "skills/skill-creator"
+    },
+    "statistical-analysis": {
+      "source": "https://github.com/k-dense-ai/scientific-agent-skills/tree/593377bb048752abb0152deab9fbb1083a6087df/skills/statistical-analysis",
+      "license": "MIT",
+      "commit": "593377bb048752abb0152deab9fbb1083a6087df",
+      "path": "skills/statistical-analysis",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "removed non-portable frontmatter key compatibility",
+        "normalized license frontmatter to MIT and copied the repository LICENSE.md as LICENSE"
+      ]
+    },
+    "status-report": {
+      "source": "https://github.com/anthropics/knowledge-work-plugins/tree/33d3dea41a341b341d4f5da2e8801ae0c89be2b8/operations/skills/status-report",
+      "license": "Apache-2.0",
+      "commit": "33d3dea41a341b341d4f5da2e8801ae0c89be2b8",
+      "path": "skills/status-report",
+      "importedAt": "2026-10-24",
+      "modifications": [
+        "removed non-portable frontmatter key argument-hint",
+        "dropped the ../../CONNECTORS.md link, which does not exist in this collection",
+        "added license: Apache-2.0 frontmatter and the repository LICENSE file"
+      ]
     },
     "webapp-testing": {
       "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/webapp-testing",

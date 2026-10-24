@@ -37,6 +37,13 @@
       "license": "MIT"
     },
     {
+      "name": "html-ppt",
+      "description": "HTML PPT Studio — author professional static HTML presentations in many styles, layouts, and animations, all driven by templates. Use when the user asks for a presentation, PPT, slides, keynote, deck, slideshow, \"幻灯片\", \"演讲稿\", \"做一份 PPT\", \"做一份 slides\", a reveal-style HTML deck, a 小红书 图文, or any kind of multi-slide pitch/report/sharing document that should look tasteful and be usable with keyboard navigation. Triggers include keywords like \"presentation\", \"ppt\", \"slides\", \"deck\", \"keynote\", \"reveal\", \"slideshow\", \"幻灯片\", \"演讲稿\", \"分享稿\", \"小红书图文\", \"talk slides\", \"pitch deck\", \"tech sharing\", \"technical presentation\".",
+      "path": "skills/html-ppt",
+      "version": "",
+      "license": "MIT"
+    },
+    {
       "name": "lean-formalize",
       "description": "Develop and verify a mathematical proof in Lean, continue an incomplete Lean project, or audit whether it proves the original statement. Connect actual inputs to intermediate lemmas, assemble the target theorem, check its transitive axioms, and provide a reproducible handoff. Use when Lean is requested or a specific proof obligation benefits from formal verification; use proof-writer for ordinary mathematical drafting.",
       "path": "skills/lean-formalize",
@@ -65,6 +72,20 @@
       "license": "Apache-2.0"
     },
     {
+      "name": "results-analysis",
+      "description": "This skill should be used when the user asks to \"analyze experimental results\", \"run strict statistical analysis\", \"compare model performance\", \"generate scientific figures\", \"check significance\", \"do ablation analysis\", or mentions interpreting experiment data with rigorous statistics and visualization. It focuses on strict analysis bundles, not Results-section prose.",
+      "path": "skills/results-analysis",
+      "version": "0.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "results-report",
+      "description": "This skill should be used when the user asks to \"write an experiment report\", \"summarize experimental results\", \"do experiment retrospection\", \"write a results report\", \"写实验总结报告\", \"写实验复盘\", or mentions turning completed experiment artifacts into a structured, decision-oriented research report. It assumes strict analysis should come from `results-analysis` first.",
+      "path": "skills/results-report",
+      "version": "0.1.0",
+      "license": "MIT"
+    },
+    {
       "name": "shell-review",
       "description": "Review shell scripts for destructive commands, quoting and portability bugs, and offline-install safety before running or shipping them. Use when the user asks to review, harden, or debug a .sh script, an installer, a Makefile shell block, or a command containing rm -rf, curl | sh, sudo, or eval.",
       "path": "skills/shell-review",
@@ -75,6 +96,20 @@
       "name": "skill-creator",
       "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
       "path": "skills/skill-creator",
+      "version": "",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "statistical-analysis",
+      "description": "Guided statistical analysis for research data - test selection, assumption checking, effect sizes, power analysis, Bayesian alternatives, and APA-formatted reporting. Use whenever a user wants to compare groups, test a hypothesis, analyze experimental or survey data, check statistical assumptions, compute required sample sizes, or write up results - even if they never name a specific test. Covers t-tests, ANOVA, chi-square, correlation, regression, non-parametric and Bayesian methods. For low-level model APIs, see the statsmodels and pymc skills.",
+      "path": "skills/statistical-analysis",
+      "version": "2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "status-report",
+      "description": "Generate a status report with KPIs, risks, and action items. Use when writing a weekly or monthly update for leadership, summarizing project health with green/yellow/red status, surfacing risks and decisions that need stakeholder attention, or turning a pile of project tracker activity into a readable narrative.",
+      "path": "skills/status-report",
       "version": "",
       "license": "Apache-2.0"
     },

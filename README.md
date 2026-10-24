@@ -114,12 +114,17 @@ Copilot、OpenCode、Cline、Windsurf、Zed、Amp、Kimi Code CLI、Warp、DSH �
 | [`formula-derivation`](skills/formula-derivation/) | Structures and derives research formulas when the user wants to 推导公式, build a theory line, organize assumptions, turn scattered equations into a coherent… | MIT |
 | [`frontend-design`](skills/frontend-design/) | Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making… | Apache-2.0 |
 | [`handoff`](skills/handoff/) | Write a compact, source-linked handoff note so another session, agent, or machine can resume the work without re-reading the whole conversation. Use when the… | MIT |
+| [`html-ppt`](skills/html-ppt/) | HTML PPT Studio — author professional static HTML presentations in many styles, layouts, and animations, all driven by templates. Use when the user asks for… | MIT |
 | [`lean-formalize`](skills/lean-formalize/) | Develop and verify a mathematical proof in Lean, continue an incomplete Lean project, or audit whether it proves the original statement. Connect actual… | MIT |
 | [`mcp-builder`](skills/mcp-builder/) | Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use… | Apache-2.0 |
 | [`nature-reader`](skills/nature-reader/) | Create source-grounded Chinese-English paper readers with aligned text, figures, tables, and equations. Use for 全文翻译、中英文对照、论文精读 or source-linked questions… | Apache-2.0 |
 | [`nature-shared`](skills/nature-shared/) | Internal shared-reference support package for installed Nature Skills, including nature-writing, nature-polishing, nature-response, nature-reader, and… | Apache-2.0 |
+| [`results-analysis`](skills/results-analysis/) | This skill should be used when the user asks to "analyze experimental results", "run strict statistical analysis", "compare model performance", "generate… | MIT |
+| [`results-report`](skills/results-report/) | This skill should be used when the user asks to "write an experiment report", "summarize experimental results", "do experiment retrospection", "write a… | MIT |
 | [`shell-review`](skills/shell-review/) | Review shell scripts for destructive commands, quoting and portability bugs, and offline-install safety before running or shipping them. Use when the user… | MIT |
 | [`skill-creator`](skills/skill-creator/) | Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize… | Apache-2.0 |
+| [`statistical-analysis`](skills/statistical-analysis/) | Guided statistical analysis for research data - test selection, assumption checking, effect sizes, power analysis, Bayesian alternatives, and APA-formatted… | MIT |
+| [`status-report`](skills/status-report/) | Generate a status report with KPIs, risks, and action items. Use when writing a weekly or monthly update for leadership, summarizing project health with… | Apache-2.0 |
 | [`webapp-testing`](skills/webapp-testing/) | Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing… | Apache-2.0 |
 <!-- catalog:end -->
 
