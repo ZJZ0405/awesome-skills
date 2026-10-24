@@ -89,6 +89,7 @@ SKILL_FIELDS = frozenset(
         "paths",
         "include",
         "exclude",
+        "excludePaths",
         "rename",
         "enabled",
     )
@@ -124,6 +125,7 @@ class Upstream:
     paths: List[str]
     include: List[str]
     exclude: List[str]
+    exclude_paths: List[str]
     enabled: bool
 
 
@@ -347,6 +349,32 @@ def _pattern_list(item, key, where, required):
     return patterns
 
 
+def _path_glob_list(item, key, where):
+    raw = item.get(key)
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise SyncError("%s.%s must be a list" % (where, key))
+    patterns = []
+    for index, value in enumerate(raw):
+        if not isinstance(value, str) or not value.strip():
+            raise SyncError("%s.%s[%d] must be a non-empty string" % (where, key, index))
+        value = value.strip()
+        if "\\" in value:
+            raise SyncError("%s.%s[%d] must use forward slashes" % (where, key, index))
+        if value.startswith("/"):
+            raise SyncError("%s.%s[%d] must be relative" % (where, key, index))
+        parts = PurePosixPath(value).parts
+        if ".." in parts:
+            raise SyncError("%s.%s[%d] must not contain '..'" % (where, key, index))
+        value = PurePosixPath(value).as_posix()
+        if not parts or value in (".", ""):
+            raise SyncError("%s.%s[%d] is not a usable path glob" % (where, key, index))
+        if value not in patterns:
+            patterns.append(value)
+    return patterns
+
+
 def load_config(root):
     path = root / "upstreams.json"
     data = read_json(path, "upstreams.json")
@@ -442,6 +470,8 @@ def load_config(root):
         if not isinstance(enabled, bool):
             raise SyncError("%s.enabled must be true or false" % where)
 
+        exclude_paths = _path_glob_list(item, "excludePaths", where)
+
         if license_value == "per-skill":
             for name in include:
                 if has_magic(name):
@@ -475,6 +505,7 @@ def load_config(root):
                 paths=paths,
                 include=include,
                 exclude=exclude,
+                exclude_paths=exclude_paths,
                 enabled=enabled,
             )
         )
@@ -793,48 +824,71 @@ def with_license(text, spdx):
     return "\n".join(lines) + "\n"
 
 
-def copy_source(source, dest):
+def is_excluded_path(rel, patterns):
+    """Match a skill-relative POSIX path or any of its parents against globs."""
+    if not patterns:
+        return False
+    parts = PurePosixPath(rel).parts
+    for end in range(1, len(parts) + 1):
+        candidate = "/".join(parts[:end])
+        for pattern in patterns:
+            if fnmatch.fnmatchcase(candidate, pattern):
+                return True
+    return False
+
+
+def copy_source(source, dest, exclude_paths=()):
     source = Path(source)
     dest = Path(dest)
     total = 0
     for dirpath, dirnames, filenames in os.walk(str(source), followlinks=False):
         current = Path(dirpath)
-        dirnames[:] = sorted(
-            name for name in dirnames if name not in SKIP_DIRS
-        )
-        for name in list(dirnames):
+        kept = []
+        for name in sorted(dirnames):
+            if name in SKIP_DIRS:
+                continue
             path = current / name
+            rel = path.relative_to(source).as_posix()
+            if is_excluded_path(rel, exclude_paths):
+                continue
             if path.is_symlink():
-                raise SkipSkill(
-                    "contains a symlink: %s" % path.relative_to(source).as_posix()
-                )
-        for name in filenames:
+                raise SkipSkill("contains a symlink: %s" % rel)
+            kept.append(name)
+        dirnames[:] = kept
+        for name in sorted(filenames):
             path = current / name
+            rel = path.relative_to(source).as_posix()
+            if is_excluded_path(rel, exclude_paths):
+                continue
             if path.is_symlink():
-                raise SkipSkill(
-                    "contains a symlink: %s" % path.relative_to(source).as_posix()
-                )
+                raise SkipSkill("contains a symlink: %s" % rel)
             if name in HASH_IGNORE_FILES or name.endswith(".pyc"):
                 continue
             try:
                 size = path.stat().st_size
             except OSError as exc:
-                raise SkipSkill("cannot stat %s: %s" % (name, exc))
+                raise SkipSkill("cannot stat %s: %s" % (rel, exc))
             if size > MAX_FILE_BYTES:
                 raise SkipSkill(
-                    "%s is larger than %d MB"
-                    % (path.relative_to(source).as_posix(), MAX_FILE_BYTES // 1048576)
+                    "%s is larger than %d MB" % (rel, MAX_FILE_BYTES // 1048576)
                 )
             total += size
             if total > MAX_SKILL_BYTES:
                 raise SkipSkill(
                     "skill folder is larger than %d MB" % (MAX_SKILL_BYTES // 1048576)
                 )
-    shutil.copytree(
-        str(source),
-        str(dest),
-        ignore=shutil.ignore_patterns(*IGNORE_COPY),
-    )
+
+    base_ignore = shutil.ignore_patterns(*IGNORE_COPY)
+
+    def ignore(dirpath, names):
+        ignored = set(base_ignore(dirpath, names))
+        for name in names:
+            rel = (Path(dirpath) / name).relative_to(source).as_posix()
+            if is_excluded_path(rel, exclude_paths):
+                ignored.add(name)
+        return sorted(ignored)
+
+    shutil.copytree(str(source), str(dest), ignore=ignore)
 
 
 def is_inside(path, parent):
@@ -977,7 +1031,7 @@ def prepare_skill(candidate, expected_license, license_source, notice_sources, o
     staged = Path(stage_root) / candidate.upstream.id / candidate.name
     staged.parent.mkdir(parents=True, exist_ok=True)
     try:
-        copy_source(candidate.path, staged)
+        copy_source(candidate.path, staged, candidate.upstream.exclude_paths)
         license_name = PurePosixPath(candidate.upstream.license_file).name
         if not license_source.is_file() or license_source.is_symlink():
             raise SkipSkill("license file is missing: %s" % license_source.name)

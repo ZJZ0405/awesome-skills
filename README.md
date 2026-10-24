@@ -95,6 +95,7 @@ Copilot、OpenCode、Cline、Windsurf、Zed、Amp、Kimi Code CLI、Warp、DSH �
 <!-- catalog:start -->
 | 技能 | 用途 | 许可证 |
 | :--- | :--- | :--- |
+| [`archify`](skills/archify/) | Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone… | MIT |
 | [`frontend-design`](skills/frontend-design/) | Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making… | Apache-2.0 |
 | [`handoff`](skills/handoff/) | Write a compact, source-linked handoff note so another session, agent, or machine can resume the work without re-reading the whole conversation. Use when the… | MIT |
 | [`mcp-builder`](skills/mcp-builder/) | Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use… | Apache-2.0 |

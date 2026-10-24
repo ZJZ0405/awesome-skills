@@ -22,6 +22,25 @@
         "skill-creator",
         "webapp-testing"
       ]
+    },
+    {
+      "id": "archify",
+      "repo": "tt-a1i/archify",
+      "track": "tag:v3.2.0",
+      "license": "per-skill",
+      "licenses": {
+        "archify": "MIT"
+      },
+      "licenseFile": "LICENSE",
+      "paths": [
+        "archify"
+      ],
+      "include": [
+        "archify"
+      ],
+      "excludePaths": [
+        "examples/*.html"
+      ]
     }
   ]
 }

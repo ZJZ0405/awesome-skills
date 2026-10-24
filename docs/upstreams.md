@@ -3,7 +3,8 @@
 > 状态：已实现（2026-10-24）。白名单在 [upstreams.json](../upstreams.json)，
 > 同步脚本是 [scripts/sync_upstreams.py](../scripts/sync_upstreams.py)，锁文件是
 > [upstreams.lock.json](../upstreams.lock.json)。当前接入了
-> `anthropics/skills` 的 4 个 Apache-2.0 技能；新增上游按第 8 节操作。
+> `anthropics/skills` 的 4 个 Apache-2.0 技能和 `tt-a1i/archify`（MIT）；
+> 新增上游按第 8 节操作。
 
 ## 1. 目标
 
@@ -80,6 +81,17 @@ validate.py --strict → catalog.py → test-install.sh → 开 PR
         "skill-creator",
         "webapp-testing"
       ]
+    },
+    {
+      "id": "archify",
+      "repo": "tt-a1i/archify",
+      "track": "tag:v3.2.0",
+      "license": "per-skill",
+      "licenses": { "archify": "MIT" },
+      "licenseFile": "LICENSE",
+      "paths": ["archify"],
+      "include": ["archify"],
+      "excludePaths": ["examples/*.html"]
     }
   ]
 }
@@ -96,6 +108,7 @@ validate.py --strict → catalog.py → test-install.sh → 开 PR
 | `paths` | 是 | sparse checkout 的目录，也是搜索 `SKILL.md` 的范围；`"."` 表示仓库根。 |
 | `include` | 是 | 技能名或 glob；显式白名单，**空数组表示不导入**。 |
 | `exclude` | 否 | 优先于 `include`。 |
+| `excludePaths` | 否 | 技能目录内的相对路径 glob；命中的文件不 vendor，用于排除上游生成产物。 |
 | `rename` | 否 | 暂未实现；写了非空值会被脚本拒绝。 |
 | `enabled` | 否 | 默认 `true`；设为 `false` 可暂停某个 upstream。 |
 
@@ -113,6 +126,9 @@ validate.py --strict → catalog.py → test-install.sh → 开 PR
 - 同步只接受 `MIT`、`Apache-2.0`、`BSD-2-Clause`、`BSD-3-Clause`、`ISC`、
   `CC0-1.0`。GPL/AGPL、`NOASSERTION`、source-available、没有许可证的仓库
   一律跳过。
+- `excludePaths` 用 `fnmatch` 匹配技能目录内的 POSIX 相对路径，命中的文件
+  不复制、也不进 lock。用来排除上游签入的生成产物（如演示 HTML），避免把
+  “源码”和“构建结果”一起 vendor；不要用它排除技能运行所需的文件。
 
 ## 4. 锁文件与来源
 
@@ -193,8 +209,9 @@ python3 scripts/sync_upstreams.py --check            # 只比较 lock 与上游 
 6. license gate：SPDX 白名单、许可证文件存在且非空、复制 `LICENSE`/`NOTICE`，
    必要时补写或改写 `license:`。
 7. 漂移检查：本地文件与 lock 不一致时默认中止；`--force` 才覆盖。
-8. 复制到 `skills/<name>/`，保留可执行位；给 `scripts/` 下的 `.sh`/`.bash`/
-   带 shebang 的文件补 `+x`；拒绝符号链接和超大文件。
+8. 复制到 `skills/<name>/`，先应用 `excludePaths`，保留可执行位；给
+   `scripts/` 下的 `.sh`/`.bash`/带 shebang 的文件补 `+x`；拒绝符号链接和
+   超大文件。
 9. 更新 lock/sources，输出 added / updated / unchanged / skipped / orphaned /
    available-not-imported。
 
@@ -254,6 +271,7 @@ sh tests/test-install.sh
   `metadata`、`version`；`context`、`hooks`、`agent`、`model` 等会跳过。
 - `name` = 目录名，小写字母/数字/单连字符，≤64 字符；description ≤1024。
 - 相对链接必须能打开；`references/`、`scripts/`、`assets/` 下的断链会跳过。
+  行内代码和 fenced code 块里的链接示例不算链接，不会被误报。
 - `SKILL.md` 超过 500 行、技能目录超过 25 MB、单文件超过 10 MB、包含符号
   链接会被跳过。
 - `scripts/` 下的 shell/带 shebang 脚本没有可执行位时，同步补 `+x`；没有
@@ -365,6 +383,7 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
 | --- | --- | --- |
 | A | 配置、sync 脚本、lock、workflow、docs、测试 | 已完成 |
 | B | 接入 `anthropics/skills` 的 4 个 Apache-2.0 技能 | 已完成 |
+| B2 | 接入 `tt-a1i/archify` v3.2.0（MIT），排除 15 个生成的演示 HTML | 已完成 |
 | C | 接入 `getsentry/find-bugs` 等通用技能 | 待按需 |
 
 暂缓：`rename`、GitHub App、自动发现、`skills/vendor/` 分层。当前扁平
@@ -382,6 +401,15 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
 | `cloudflare/skills` | Apache-2.0 | `skills/`，约 20 个 | 按需；Workers/Cloudflare 专用 |
 | `prisma/skills` | MIT | 仓库根目录 | 按需；Prisma 专用 |
 | `openai/skills` | 逐技能 | `skills/` | 跳过；README 已标 deprecated |
+
+`tt-a1i/archify` 细节：
+
+- 锁定 `tag:v3.2.0`（MIT）；技能在仓库的 `archify/` 子目录，运行时需要
+  Node.js ≥ 18。
+- 上游每个版本签入 15 个约 12 MB 的演示 HTML（`examples/*.html`）；用
+  `excludePaths` 排除后技能包约 5.5 MB，JSON 示例、schema 和渲染器完整保留。
+- `renderers/shared/diagnostics.mjs` 用字面 NUL 字节拼接去重键，安全扫描会
+  报 “binary file”；已人工确认只是 JS 字符串分隔符，不是可执行载荷。
 
 `anthropics/skills` 细节：
 
@@ -442,3 +470,4 @@ CI 在 Ubuntu/macOS 上都会跑这套测试。
 - [.github/workflows/sync-skills.yml](../.github/workflows/sync-skills.yml) — 定时同步
 - [Agent Skills](https://agentskills.io)、[skills.sh](https://skills.sh)
 - [anthropics/skills](https://github.com/anthropics/skills)
+- [tt-a1i/archify](https://github.com/tt-a1i/archify)

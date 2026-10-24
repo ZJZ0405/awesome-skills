@@ -222,6 +222,73 @@ class SyncTest(unittest.TestCase):
             "https://github.com/acme/skills/tree/%s/skills/alpha" % commit,
         )
 
+    def test_exclude_paths_are_not_vendored(self):
+        self.make_repo(
+            "acme/skills",
+            {
+                "LICENSE": LICENSE_MIT,
+                "skills/demo/SKILL.md": skill_md("demo"),
+                "skills/demo/examples/keep.json": "{}\n",
+                "skills/demo/examples/demo-rendered.html": "<html></html>\n",
+                "skills/demo/examples/nested/drop.html": "<html></html>\n",
+            },
+        )
+        self.set_config(
+            [self.base_upstream(["demo"], excludePaths=["examples/*.html"])]
+        )
+        proc = self.sync()
+        self.assert_ok(proc)
+
+        demo = self.skill_dir("demo")
+        self.assertTrue((demo / "examples" / "keep.json").is_file())
+        self.assertFalse((demo / "examples" / "demo-rendered.html").exists())
+        self.assertFalse((demo / "examples" / "nested" / "drop.html").exists())
+        files = self.lock()["upstreams"]["acme"]["skills"]["demo"]["files"]
+        self.assertIn("examples/keep.json", files)
+        self.assertNotIn("examples/demo-rendered.html", files)
+
+        again = self.sync()
+        self.assert_ok(again)
+        self.assertIn("0 added, 0 updated, 1 unchanged", again.stdout)
+
+    def test_exclude_paths_reject_traversal(self):
+        self.set_config(
+            [self.base_upstream(["alpha"], excludePaths=["../secret/*"])]
+        )
+        proc = self.sync()
+        self.assert_failed(proc)
+        self.assertIn("must not contain '..'", proc.stderr)
+
+    def test_code_span_links_are_not_portability_errors(self):
+        md = skill_md("demo").replace(
+            "Body for demo.",
+            "Example: `Created [timing](/abs/path/timing.html).`",
+        )
+        self.make_repo(
+            "acme/skills",
+            {"LICENSE": LICENSE_MIT, "skills/demo/SKILL.md": md},
+        )
+        self.set_config([self.base_upstream(["demo"])])
+        proc = self.sync()
+        self.assert_ok(proc)
+        self.assertTrue((self.skill_dir("demo") / "SKILL.md").is_file())
+
+    def test_broken_reference_links_still_skip(self):
+        md = skill_md("demo").replace(
+            "Body for demo.",
+            "See [notes](references/missing.md).",
+        )
+        self.make_repo(
+            "acme/skills",
+            {"LICENSE": LICENSE_MIT, "skills/demo/SKILL.md": md},
+        )
+        self.set_config([self.base_upstream(["demo"])])
+        proc = self.sync()
+        self.assert_ok(proc)
+        self.assertIn("1 skipped", proc.stdout)
+        self.assertIn("broken internal link", proc.stdout)
+        self.assertFalse(self.skill_dir("demo").exists())
+
     def test_second_run_is_unchanged_and_check_detects_moves(self):
         work = self.make_repo(
             "acme/skills",

@@ -30,12 +30,31 @@ from skilllib import (
 )
 
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+[\"'][^\"']*[\"'])?\)")
+CODE_SPAN_RE = re.compile(r"`+[^`]*`+")
 INTERNAL_PREFIXES = ("references/", "scripts/", "assets/", "./references/", "./scripts/", "./assets/")
+
+
+def strip_code(text):
+    """Drop fenced blocks and inline code so examples are not checked as links."""
+    lines = []
+    fence = ""
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if fence:
+            if stripped.startswith(fence):
+                fence = ""
+            lines.append("")
+        elif stripped.startswith("```") or stripped.startswith("~~~"):
+            fence = stripped[:3]
+            lines.append("")
+        else:
+            lines.append(line)
+    return CODE_SPAN_RE.sub("", "\n".join(lines))
 
 
 def check_links(skill):
     problems = []
-    body = skill.body or ""
+    body = strip_code(skill.body or "")
     for match in LINK_RE.finditer(body):
         target = match.group(1).strip()
         if not target or target.startswith(("#", "<", "mailto:")):

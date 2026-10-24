@@ -1,6 +1,13 @@
 {
   "schemaVersion": 1,
   "skills": {
+    "archify": {
+      "source": "https://github.com/tt-a1i/archify/tree/208acba8d412335185b2056fedf54b3405df43fb/archify",
+      "license": "MIT",
+      "upstream": "archify",
+      "commit": "208acba8d412335185b2056fedf54b3405df43fb",
+      "path": "archify"
+    },
     "frontend-design": {
       "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/frontend-design",
       "license": "Apache-2.0",
