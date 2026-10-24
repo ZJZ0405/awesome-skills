@@ -1,0 +1,1104 @@
+#!/bin/sh
+# awesome-skills — portable installer for agent skills.
+#
+# POSIX shell only. No network access, no runtime dependencies beyond
+# standard POSIX utilities. Designed for air-gapped machines.
+#
+# https://github.com/ZJZ0405/awesome-skills
+
+set -eu
+
+# ---------------------------------------------------------------------------
+# Locate the repository (follow symlinks to this script).
+# ---------------------------------------------------------------------------
+
+_self=$0
+case $_self in
+  */*) ;;
+  *) _self=$(command -v "$_self" 2>/dev/null || printf '%s\n' "$_self") ;;
+esac
+
+while [ -L "$_self" ]; do
+  _dir=$(CDPATH= cd -- "$(dirname -- "$_self")" && pwd -P)
+  _link=$(readlink "$_self")
+  case $_link in
+    /*) _self=$_link ;;
+    *) _self=$_dir/$_link ;;
+  esac
+done
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$_self")/.." && pwd -P)
+AGENTS=$ROOT/lib/agents.tsv
+VERSION=$(sed -n '1p' "$ROOT/VERSION" 2>/dev/null || printf 'dev')
+
+# ---------------------------------------------------------------------------
+# Defaults
+# ---------------------------------------------------------------------------
+
+CMD=
+TOOLS=
+SKILLS=
+SCOPE=global
+PROJECT=
+PROJECT_ABS=
+MODE=link
+FORCE=0
+DRY_RUN=0
+QUIET=0
+ALL=0
+LIST_MODE=both
+
+case $(uname -s 2>/dev/null || printf unknown) in
+  MINGW*|MSYS*|CYGWIN*) MODE=copy ;;
+esac
+
+TMP_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/awesome-skills.XXXXXX")
+trap 'rm -rf "$TMP_ROOT"' EXIT HUP INT TERM
+
+# ---------------------------------------------------------------------------
+# Output helpers
+# ---------------------------------------------------------------------------
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  C_RESET=$(printf '\033[0m')
+  C_DIM=$(printf '\033[2m')
+  C_OK=$(printf '\033[32m')
+  C_WARN=$(printf '\033[33m')
+  C_ERR=$(printf '\033[31m')
+  C_BOLD=$(printf '\033[1m')
+else
+  C_RESET= C_DIM= C_OK= C_WARN= C_ERR= C_BOLD=
+fi
+
+say() {
+  [ "$QUIET" = 1 ] && return 0
+  printf '%s\n' "$*"
+}
+
+info() {
+  [ "$QUIET" = 1 ] && return 0
+  printf '%s%s%s\n' "$C_DIM" "$*" "$C_RESET"
+}
+
+ok() {
+  [ "$QUIET" = 1 ] && return 0
+  printf '%s✓%s %s\n' "$C_OK" "$C_RESET" "$*"
+}
+
+warn() {
+  printf '%s!%s %s\n' "$C_WARN" "$C_RESET" "$*" >&2
+}
+
+die() {
+  printf '%serror:%s %s\n' "$C_ERR" "$C_RESET" "$*" >&2
+  exit 1
+}
+
+pretty() {
+  case ${1:-} in
+    "$HOME"/*) printf '~/%s' "${1#"$HOME"/}" ;;
+    *) printf '%s' "${1:-}" ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Usage
+# ---------------------------------------------------------------------------
+
+usage() {
+  cat <<EOF
+awesome-skills $VERSION — offline installer for agent skills
+
+USAGE
+  awesome-skills install   [options]
+  awesome-skills uninstall [options]
+  awesome-skills list      [--available | --installed]
+  awesome-skills doctor
+  awesome-skills tools     [--detected]
+  awesome-skills help | version
+
+INSTALL OPTIONS
+  --tool LIST      Comma-separated tool aliases (claude-code,cursor,...),
+                   "auto" (default: detected tools) or "all".
+  --skill LIST     Comma-separated skill names (default: every skill).
+  --project DIR    Install into a project instead of globally.
+  --global         Install globally (default).
+  --copy           Copy skills instead of symlinking them.
+  --link           Symlink skills (default; forced to copy on Windows shells).
+  --force          Replace paths that were not installed by awesome-skills.
+                   The previous content is moved to the backup directory.
+  --dry-run        Print what would happen; change nothing.
+  --quiet          Only warnings and errors.
+
+UNINSTALL OPTIONS
+  --tool LIST      Remove the mirrors for these tools.
+  --skill LIST     Limit to these skills.
+  --all            Remove every recorded mirror and the hub copies.
+  --project DIR    Operate on a project install.
+  --dry-run        Print what would happen; change nothing.
+
+EXAMPLES
+  ./install.sh --tool auto
+  ./install.sh --tool claude-code,cursor,codex --skill handoff
+  ./install.sh --tool all --project ~/code/my-app
+  ./install.sh --tool claude-code --copy --force
+  ./bin/awesome-skills uninstall --all
+  ./bin/awesome-skills tools --detected
+
+ENVIRONMENT
+  AWESOME_SKILLS_HOME   Override the global hub
+                        (default: \$HOME/.agents/skills).
+  NO_COLOR              Disable colour output.
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+
+add_csv() {
+  if [ -z "$1" ]; then
+    printf '%s' "$2"
+  else
+    printf '%s,%s' "$1" "$2"
+  fi
+}
+
+need_value() {
+  [ $# -ge 2 ] || die "option $1 requires a value"
+}
+
+parse_args() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --tool)
+        need_value "$@"
+        TOOLS=$(add_csv "${TOOLS:-}" "$2")
+        shift 2
+        ;;
+      --tool=*)
+        TOOLS=$(add_csv "${TOOLS:-}" "${1#*=}")
+        shift
+        ;;
+      --skill)
+        need_value "$@"
+        SKILLS=$(add_csv "${SKILLS:-}" "$2")
+        shift 2
+        ;;
+      --skill=*)
+        SKILLS=$(add_csv "${SKILLS:-}" "${1#*=}")
+        shift
+        ;;
+      --project)
+        need_value "$@"
+        SCOPE=project
+        PROJECT=$2
+        shift 2
+        ;;
+      --project=*)
+        SCOPE=project
+        PROJECT=${1#*=}
+        shift
+        ;;
+      --global)
+        SCOPE=global
+        shift
+        ;;
+      --copy)
+        MODE=copy
+        shift
+        ;;
+      --link)
+        MODE=link
+        shift
+        ;;
+      --force|-f)
+        FORCE=1
+        shift
+        ;;
+      --dry-run|-n)
+        DRY_RUN=1
+        shift
+        ;;
+      --quiet|-q)
+        QUIET=1
+        shift
+        ;;
+      --all)
+        ALL=1
+        shift
+        ;;
+      --available)
+        LIST_MODE=available
+        shift
+        ;;
+      --installed)
+        LIST_MODE=installed
+        shift
+        ;;
+      --detected)
+        TOOLS=auto
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -V|--version)
+        printf '%s\n' "$VERSION"
+        exit 0
+        ;;
+      -*)
+        die "unknown option: $1 (try --help)"
+        ;;
+      *)
+        die "unexpected argument: $1 (try --help)"
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Scope, hub and state
+# ---------------------------------------------------------------------------
+
+setup_scope() {
+  case $SCOPE in
+    global)
+      HUB=${AWESOME_SKILLS_HOME:-$HOME/.agents/skills}
+      STATE=$HOME/.agents/.awesome-skills
+      ;;
+    project)
+      [ -n "$PROJECT" ] || die "--project requires a directory"
+      [ -d "$PROJECT" ] || die "project directory does not exist: $PROJECT"
+      PROJECT_ABS=$(CDPATH= cd -- "$PROJECT" && pwd -P)
+      HUB=$PROJECT_ABS/.agents/skills
+      STATE=$PROJECT_ABS/.agents/.awesome-skills
+      ;;
+    *)
+      die "invalid scope: $SCOPE"
+      ;;
+  esac
+  MANIFEST=$STATE/manifest.tsv
+}
+
+# ---------------------------------------------------------------------------
+# Agent table helpers
+# ---------------------------------------------------------------------------
+
+tool_row() {
+  awk -F'\t' -v a="$1" '!/^#/ && $1==a {print; exit}' "$AGENTS"
+}
+
+tool_field() {
+  printf '%s\n' "$1" | cut -f"$2"
+}
+
+tool_detected() {
+  local _detect _old_ifs _d
+  _detect=$1
+  _old_ifs=$IFS
+  IFS=';'
+  for _d in $_detect; do
+    case $_d in
+      N/A|'')
+        continue
+        ;;
+      cmd:*)
+        if command -v "${_d#cmd:}" >/dev/null 2>&1; then
+          IFS=$_old_ifs
+          return 0
+        fi
+        ;;
+      '~/'*)
+        if [ -e "$HOME/${_d#\~/}" ]; then
+          IFS=$_old_ifs
+          return 0
+        fi
+        ;;
+      *)
+        if [ -e "$_d" ]; then
+          IFS=$_old_ifs
+          return 0
+        fi
+        ;;
+    esac
+  done
+  IFS=$_old_ifs
+  return 1
+}
+
+tool_target() {
+  # $1 = table row, $2 = global|project
+  local _p
+  case $2 in
+    global) _p=$(tool_field "$1" 3) ;;
+    project) _p=$(tool_field "$1" 2) ;;
+    *) die "invalid scope: $2" ;;
+  esac
+  if [ "$_p" = "N/A" ] || [ -z "$_p" ]; then
+    printf ''
+    return 0
+  fi
+  case $_p in
+    '~/'*) printf '%s/%s\n' "$HOME" "${_p#\~/}" ;;
+    /*) printf '%s\n' "$_p" ;;
+    *) printf '%s/%s\n' "$PROJECT_ABS" "$_p" ;;
+  esac
+}
+
+select_tools() {
+  local _row _alias _tgt _old_ifs
+  : >"$TMP_ROOT/tools.raw"
+
+  if [ -z "$TOOLS" ] || [ "$TOOLS" = "auto" ]; then
+    while IFS= read -r _row; do
+      case $_row in
+        '#'*|'') continue ;;
+      esac
+      if tool_detected "$(tool_field "$_row" 4)"; then
+        printf '%s\n' "$_row" >>"$TMP_ROOT/tools.raw"
+      fi
+    done <"$AGENTS"
+  elif [ "$TOOLS" = "all" ]; then
+    grep -v '^#' "$AGENTS" >"$TMP_ROOT/tools.raw" || true
+  else
+    _old_ifs=$IFS
+    IFS=','
+    for _alias in $TOOLS; do
+      IFS=$_old_ifs
+      _alias=$(printf '%s' "$_alias" | tr -d ' ')
+      [ -n "$_alias" ] || continue
+      _row=$(tool_row "$_alias")
+      [ -n "$_row" ] || die "unknown tool '$_alias' (run: awesome-skills tools)"
+      printf '%s\n' "$_row" >>"$TMP_ROOT/tools.raw"
+      IFS=','
+    done
+    IFS=$_old_ifs
+  fi
+
+  : >"$TMP_ROOT/tools"
+  while IFS= read -r _row; do
+    [ -n "$_row" ] || continue
+    _alias=$(tool_field "$_row" 1)
+    _tgt=$(tool_target "$_row" "$SCOPE")
+    if [ -z "$_tgt" ]; then
+      warn "$_alias has no $SCOPE skills directory; skipped"
+      continue
+    fi
+    printf '%s\n' "$_row" >>"$TMP_ROOT/tools"
+  done <"$TMP_ROOT/tools.raw"
+
+  if [ ! -s "$TMP_ROOT/tools" ]; then
+    if [ -z "$TOOLS" ]; then
+      warn "no supported agent detected; installing to the shared hub only"
+    else
+      die "none of the selected tools supports $SCOPE installation"
+    fi
+  fi
+}
+
+build_mirror_dirs() {
+  local _row _tgt
+  : >"$TMP_ROOT/dirs"
+  while IFS= read -r _row; do
+    _tgt=$(tool_target "$_row" "$SCOPE")
+    [ -n "$_tgt" ] || continue
+    [ "$_tgt" = "$HUB" ] && continue
+    printf '%s\n' "$_tgt" >>"$TMP_ROOT/dirs"
+  done <"$TMP_ROOT/tools"
+  awk '!seen[$0]++' "$TMP_ROOT/dirs" >"$TMP_ROOT/dirs.uniq"
+  mv "$TMP_ROOT/dirs.uniq" "$TMP_ROOT/dirs"
+}
+
+# ---------------------------------------------------------------------------
+# Skill discovery
+# ---------------------------------------------------------------------------
+
+discover_skills() {
+  find "$ROOT/skills" -type f -name SKILL.md -print 2>/dev/null |
+    while IFS= read -r _f; do
+      _d=${_f%/SKILL.md}
+      _n=${_d##*/}
+      case $_n in
+        ''|.*) continue ;;
+      esac
+      # Match the Agent Skills discovery depth: <name>, <cat>/<name>,
+      # <cat>/<cat>/<name>. Deeper SKILL.md files are examples or assets.
+      _rel=${_d#"$ROOT/skills/"}
+      case $_rel in
+        */*/*/*) continue ;;
+      esac
+      # A SKILL.md nested inside another skill folder is not a separate skill.
+      _nested=0
+      _p=$(dirname "$_d")
+      while [ "$_p" != "$ROOT/skills" ] && [ "$_p" != "/" ]; do
+        if [ -f "$_p/SKILL.md" ]; then
+          _nested=1
+          break
+        fi
+        _p=$(dirname "$_p")
+      done
+      [ "$_nested" = 1 ] && continue
+      printf '%s\t%s\n' "$_n" "$_d"
+    done | LC_ALL=C sort
+}
+
+select_skills() {
+  local _dups _s _line _old_ifs
+  discover_skills >"$TMP_ROOT/all-skills"
+  [ -s "$TMP_ROOT/all-skills" ] || die "no skills found under $ROOT/skills"
+
+  _dups=$(cut -f1 "$TMP_ROOT/all-skills" | uniq -d)
+  [ -z "$_dups" ] || die "duplicate skill names in repository: $_dups"
+
+  : >"$TMP_ROOT/skills"
+  if [ -z "$SKILLS" ]; then
+    cp "$TMP_ROOT/all-skills" "$TMP_ROOT/skills"
+  else
+    _old_ifs=$IFS
+    IFS=','
+    for _s in $SKILLS; do
+      IFS=$_old_ifs
+      _s=$(printf '%s' "$_s" | tr -d ' ')
+      [ -n "$_s" ] || continue
+      _line=$(awk -F'\t' -v n="$_s" '$1==n {print; exit}' "$TMP_ROOT/all-skills")
+      [ -n "$_line" ] || die "unknown skill '$_s' (run: awesome-skills list --available)"
+      printf '%s\n' "$_line" >>"$TMP_ROOT/skills"
+      IFS=','
+    done
+    IFS=$_old_ifs
+  fi
+
+  awk '!seen[$0]++' "$TMP_ROOT/skills" >"$TMP_ROOT/skills.uniq"
+  mv "$TMP_ROOT/skills.uniq" "$TMP_ROOT/skills"
+}
+
+# ---------------------------------------------------------------------------
+# Ownership / conflicts
+# ---------------------------------------------------------------------------
+
+is_owned_path() {
+  local _p _base _t _n
+  _p=$1
+  [ -n "$_p" ] || return 1
+  _base=${_p##*/}
+
+  if [ -L "$_p" ]; then
+    _t=$(readlink "$_p" 2>/dev/null || true)
+    case $_t in
+      "$HUB"/*)
+        [ "${_t##*/}" = "$_base" ] && return 0
+        ;;
+    esac
+  fi
+
+  if [ -f "$_p/.awesome-skills-skill" ]; then
+    _n=$(sed -n 's/^name=//p' "$_p/.awesome-skills-skill" 2>/dev/null | sed -n '1p')
+    [ "$_n" = "$_base" ] && return 0
+  fi
+
+  return 1
+}
+
+check_dest() {
+  local _p
+  _p=$1
+  if [ -e "$_p" ] || [ -L "$_p" ]; then
+    if is_owned_path "$_p"; then
+      return 0
+    fi
+    if [ "$FORCE" = 1 ]; then
+      return 0
+    fi
+    printf '%s\n' "$_p" >>"$TMP_ROOT/conflicts"
+  fi
+}
+
+nearest_writable() {
+  local _p
+  _p=$1
+  while [ ! -e "$_p" ] && [ "$_p" != "/" ]; do
+    _p=$(dirname "$_p")
+  done
+  [ -w "$_p" ]
+}
+
+preflight() {
+  local _name _src _dir
+  : >"$TMP_ROOT/conflicts"
+  : >"$TMP_ROOT/unwritable"
+
+  while IFS='	' read -r _name _src; do
+    check_dest "$HUB/$_name"
+  done <"$TMP_ROOT/skills"
+
+  while IFS= read -r _dir; do
+    [ -n "$_dir" ] || continue
+    if ! nearest_writable "$_dir"; then
+      printf '%s\n' "$_dir" >>"$TMP_ROOT/unwritable"
+    fi
+    while IFS='	' read -r _name _src; do
+      check_dest "$_dir/$_name"
+    done <"$TMP_ROOT/skills"
+  done <"$TMP_ROOT/dirs"
+
+  if [ -s "$TMP_ROOT/unwritable" ]; then
+    warn "these directories are not writable:"
+    sed 's/^/  - /' "$TMP_ROOT/unwritable" >&2
+    die "cannot install; fix permissions or choose another scope"
+  fi
+
+  if [ -s "$TMP_ROOT/conflicts" ]; then
+    warn "these paths already exist and were not installed by awesome-skills:"
+    sed 's/^/  - /' "$TMP_ROOT/conflicts" >&2
+    die "refusing to overwrite; re-run with --force (existing content is backed up)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Install primitives
+# ---------------------------------------------------------------------------
+
+write_marker() {
+  local _dir _name
+  _dir=$1
+  _name=$2
+  {
+    printf 'name=%s\n' "$_name"
+    printf 'source=ZJZ0405/awesome-skills\n'
+    printf 'version=%s\n' "$VERSION"
+    printf 'installed=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  } >"$_dir/.awesome-skills-skill"
+}
+
+backup_path() {
+  local _p _name _ts _tag _b
+  _p=$1
+  _name=$2
+  _ts=$(date +%Y%m%d-%H%M%S)
+  _tag=$(printf '%s' "$(dirname "$_p")" | cksum | cut -d' ' -f1)
+  _b=$STATE/backups/$_ts/$_tag/$_name
+  if [ -e "$_b" ] || [ -L "$_b" ]; then
+    _b=$_b.$$
+  fi
+  mkdir -p "$(dirname "$_b")"
+  mv "$_p" "$_b"
+  warn "backed up $(pretty "$_p") to $(pretty "$_b")"
+}
+
+install_hub_skill() {
+  local _name _src _dest _tmp
+  _name=$1
+  _src=$2
+  _dest=$HUB/$_name
+
+  if [ "$DRY_RUN" = 1 ]; then
+    say "  copy  $(pretty "$_src") -> $(pretty "$_dest")"
+    return 0
+  fi
+
+  mkdir -p "$HUB" "$STATE/tmp"
+  if { [ -e "$_dest" ] || [ -L "$_dest" ]; } && ! is_owned_path "$_dest"; then
+    backup_path "$_dest" "$_name"
+  fi
+
+  _tmp=$STATE/tmp/hub.$_name.$$
+  rm -rf "$_tmp"
+  cp -R "$_src" "$_tmp"
+  rm -rf "$_tmp/.git" "$_tmp/.DS_Store"
+  write_marker "$_tmp" "$_name"
+
+  if [ -e "$_dest" ] || [ -L "$_dest" ]; then
+    rm -rf "$_dest"
+  fi
+  mv "$_tmp" "$_dest"
+  ok "hub   $(pretty "$_dest")"
+}
+
+install_mirror() {
+  local _name _dir _dest _tmp
+  _name=$1
+  _dir=$2
+  _dest=$_dir/$_name
+
+  if [ "$MODE" = "link" ]; then
+    if [ -L "$_dest" ] && [ "$(readlink "$_dest" 2>/dev/null || true)" = "$HUB/$_name" ]; then
+      ok "link  $(pretty "$_dest")"
+      return 0
+    fi
+    if [ "$DRY_RUN" = 1 ]; then
+      say "  link  $(pretty "$_dest") -> $(pretty "$HUB/$_name")"
+      return 0
+    fi
+    mkdir -p "$_dir"
+    if { [ -e "$_dest" ] || [ -L "$_dest" ]; } && ! is_owned_path "$_dest"; then
+      backup_path "$_dest" "$_name"
+    fi
+    rm -rf "$_dest"
+    ln -s "$HUB/$_name" "$_dest"
+    ok "link  $(pretty "$_dest")"
+    return 0
+  fi
+
+  if [ "$DRY_RUN" = 1 ]; then
+    say "  copy  $(pretty "$HUB/$_name") -> $(pretty "$_dest")"
+    return 0
+  fi
+
+  mkdir -p "$_dir" "$STATE/tmp"
+  if { [ -e "$_dest" ] || [ -L "$_dest" ]; } && ! is_owned_path "$_dest"; then
+    backup_path "$_dest" "$_name"
+  fi
+
+  _tmp=$STATE/tmp/mirror.$_name.$$.$(printf '%s' "$_dir" | cksum | cut -d' ' -f1)
+  rm -rf "$_tmp"
+  cp -R "$HUB/$_name" "$_tmp"
+  write_marker "$_tmp" "$_name"
+  rm -rf "$_dest"
+  mv "$_tmp" "$_dest"
+  ok "copy  $(pretty "$_dest")"
+}
+
+record() {
+  # skill, kind, mode, path
+  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$VERSION" >>"$TMP_ROOT/new-manifest"
+}
+
+merge_manifest() {
+  [ -s "$TMP_ROOT/new-manifest" ] || return 0
+  mkdir -p "$STATE"
+  {
+    printf '# awesome-skills manifest v1\n'
+    printf '# scope=%s\n' "$SCOPE"
+    printf '# hub=%s\n' "$HUB"
+    cat "$TMP_ROOT/new-manifest"
+    if [ -f "$MANIFEST" ]; then
+      grep -v '^#' "$MANIFEST" || true
+    fi
+  } | awk -F'\t' '
+    /^#/ { print; next }
+    {
+      key = $1 "\t" $4
+      if (!(key in seen)) { seen[key] = 1; print }
+    }
+  ' >"$MANIFEST.tmp"
+  mv "$MANIFEST.tmp" "$MANIFEST"
+}
+
+# ---------------------------------------------------------------------------
+# install
+# ---------------------------------------------------------------------------
+
+cmd_install() {
+  local _name _src _mdir _count _tool_count
+  [ -d "$ROOT/skills" ] || die "skills directory missing: $ROOT/skills"
+  [ -f "$AGENTS" ] || die "agent table missing: $AGENTS"
+
+  select_tools
+  build_mirror_dirs
+  select_skills
+  preflight
+
+  say "${C_BOLD}awesome-skills $VERSION${C_RESET}"
+  info "repo:   $ROOT"
+  info "scope:  $SCOPE"
+  info "hub:    $(pretty "$HUB")"
+  info "mode:   $MODE"
+  [ "$SCOPE" = project ] && info "project: $PROJECT_ABS"
+  [ -n "$TOOLS" ] && info "tools:  $TOOLS"
+  say ""
+
+  : >"$TMP_ROOT/new-manifest"
+
+  while IFS='	' read -r _name _src; do
+    [ -n "$_name" ] || continue
+    say "${C_BOLD}$_name${C_RESET}"
+    install_hub_skill "$_name" "$_src"
+    record "$_name" hub copy "$HUB/$_name"
+
+    while IFS= read -r _mdir; do
+      [ -n "$_mdir" ] || continue
+      install_mirror "$_name" "$_mdir"
+      record "$_name" mirror "$MODE" "$_mdir/$_name"
+    done <"$TMP_ROOT/dirs"
+    say ""
+  done <"$TMP_ROOT/skills"
+
+  if [ "$DRY_RUN" = 1 ]; then
+    say "Dry run: no changes made."
+    return 0
+  fi
+
+  merge_manifest
+  rmdir "$STATE/tmp" 2>/dev/null || true
+
+  _count=$(wc -l <"$TMP_ROOT/skills" | tr -d ' ')
+  _tool_count=$(wc -l <"$TMP_ROOT/tools" | tr -d ' ')
+  say "${C_OK}Installed${C_RESET} $_count skill(s) into $(pretty "$HUB") for $_tool_count tool(s)."
+  say "Start a new agent session to pick them up."
+  if [ "$_tool_count" = 0 ]; then
+    say ""
+    say "No agent was detected. Skills live in the shared hub; use --tool to add"
+    say "per-tool mirrors later, or run: awesome-skills tools"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# uninstall
+# ---------------------------------------------------------------------------
+
+cmd_uninstall() {
+  local _line _skill _kind _path _parent _d _row _tgt
+  [ -f "$MANIFEST" ] || {
+    say "Nothing installed for the $SCOPE scope."
+    return 0
+  }
+
+  if [ "$ALL" = 0 ] && [ -z "$TOOLS" ]; then
+    die "choose what to remove: --tool LIST, --skill LIST --all, or --all"
+  fi
+
+  # Selected skill names (default: every skill in the manifest).
+  if [ -n "$SKILLS" ]; then
+    printf '%s\n' "$SKILLS" | tr ',' '\n' | tr -d ' ' | awk 'NF' >"$TMP_ROOT/un-sel-skills"
+  else
+    awk -F'\t' '!/^#/ {print $1}' "$MANIFEST" | awk '!seen[$0]++' >"$TMP_ROOT/un-sel-skills"
+  fi
+
+  # Selected directories (only when not removing everything).
+  : >"$TMP_ROOT/un-sel-dirs"
+  if [ "$ALL" = 0 ]; then
+    select_tools
+    while IFS= read -r _row; do
+      _tgt=$(tool_target "$_row" "$SCOPE")
+      [ -n "$_tgt" ] || continue
+      [ "$_tgt" = "$HUB" ] && continue
+      printf '%s\n' "$_tgt" >>"$TMP_ROOT/un-sel-dirs"
+    done <"$TMP_ROOT/tools"
+    awk '!seen[$0]++' "$TMP_ROOT/un-sel-dirs" >"$TMP_ROOT/un-sel-dirs.u"
+    mv "$TMP_ROOT/un-sel-dirs.u" "$TMP_ROOT/un-sel-dirs"
+    [ -s "$TMP_ROOT/un-sel-dirs" ] || die "the selected tools use the shared hub; use --all to remove it"
+  fi
+
+  say "${C_BOLD}Uninstall${C_RESET} ($SCOPE)"
+  say ""
+
+  : >"$TMP_ROOT/keep-manifest"
+  : >"$TMP_ROOT/removed-dirs"
+
+  while IFS= read -r _line; do
+    case $_line in
+      '#'*|'')
+        printf '%s\n' "$_line" >>"$TMP_ROOT/keep-manifest"
+        continue
+        ;;
+    esac
+
+    _skill=$(printf '%s\n' "$_line" | cut -f1)
+    _kind=$(printf '%s\n' "$_line" | cut -f2)
+    _path=$(printf '%s\n' "$_line" | cut -f4)
+
+    if ! grep -Fxq "$_skill" "$TMP_ROOT/un-sel-skills"; then
+      printf '%s\n' "$_line" >>"$TMP_ROOT/keep-manifest"
+      continue
+    fi
+
+    if [ "$ALL" = 0 ]; then
+      _parent=$(dirname "$_path")
+      if [ "$_kind" != "mirror" ] || ! grep -Fxq "$_parent" "$TMP_ROOT/un-sel-dirs"; then
+        printf '%s\n' "$_line" >>"$TMP_ROOT/keep-manifest"
+        continue
+      fi
+    fi
+
+    if [ ! -e "$_path" ] && [ ! -L "$_path" ]; then
+      info "gone  $(pretty "$_path")"
+      continue
+    fi
+
+    if ! is_owned_path "$_path"; then
+      warn "skip unmanaged path: $(pretty "$_path")"
+      printf '%s\n' "$_line" >>"$TMP_ROOT/keep-manifest"
+      continue
+    fi
+
+    if [ "$DRY_RUN" = 1 ]; then
+      say "  would remove $(pretty "$_path")"
+    else
+      rm -rf "$_path"
+      ok "removed $(pretty "$_path")"
+      printf '%s\n' "$(dirname "$_path")" >>"$TMP_ROOT/removed-dirs"
+    fi
+  done <"$MANIFEST"
+
+  if [ "$DRY_RUN" = 1 ]; then
+    say ""
+    say "Dry run: no changes made."
+    return 0
+  fi
+
+  if grep -qv '^#' "$TMP_ROOT/keep-manifest"; then
+    {
+      printf '# awesome-skills manifest v1\n'
+      printf '# scope=%s\n' "$SCOPE"
+      printf '# hub=%s\n' "$HUB"
+      grep -v '^#' "$TMP_ROOT/keep-manifest" || true
+    } >"$MANIFEST.tmp"
+    mv "$MANIFEST.tmp" "$MANIFEST"
+  else
+    rm -f "$MANIFEST"
+  fi
+
+  while IFS= read -r _d; do
+    [ -n "$_d" ] || continue
+    rmdir "$_d" 2>/dev/null || true
+  done <"$TMP_ROOT/removed-dirs"
+
+  rmdir "$STATE/tmp" "$STATE/backups" "$STATE" 2>/dev/null || true
+
+  say ""
+  ok "uninstall complete"
+}
+
+# ---------------------------------------------------------------------------
+# list
+# ---------------------------------------------------------------------------
+
+skill_description() {
+  awk '
+    BEGIN { c = 0 }
+    /^---[[:space:]]*$/ { c++; next }
+    c == 1 && /^description:/ {
+      sub(/^description:[[:space:]]*/, "")
+      print
+      exit
+    }
+  ' "$1/SKILL.md" 2>/dev/null |
+    sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+
+cmd_list() {
+  local _name _dir _desc _skill _kind _mode _path _ver _state
+  if [ "$LIST_MODE" = both ] || [ "$LIST_MODE" = available ]; then
+    say "${C_BOLD}Available skills${C_RESET} ($ROOT)"
+    discover_skills | while IFS='	' read -r _name _dir; do
+      _desc=$(skill_description "$_dir")
+      [ -n "$_desc" ] || _desc="(no description)"
+      _desc=$(printf '%s' "$_desc" | cut -c1-120)
+      printf '  %-22s %s\n' "$_name" "$_desc"
+    done
+    say ""
+  fi
+
+  if [ "$LIST_MODE" = both ] || [ "$LIST_MODE" = installed ]; then
+    say "${C_BOLD}Installed${C_RESET} ($SCOPE: $(pretty "$HUB"))"
+    if [ ! -f "$MANIFEST" ]; then
+      say "  (nothing recorded)"
+    else
+      grep -v '^#' "$MANIFEST" | while IFS='	' read -r _skill _kind _mode _path _ver; do
+        [ -n "$_skill" ] || continue
+        if [ -e "$_path" ] || [ -L "$_path" ]; then
+          _state="ok"
+        else
+          _state="MISSING"
+        fi
+        printf '  %-22s %-8s %-5s %-8s %s\n' "$_skill" "$_kind" "$_mode" "$_state" "$(pretty "$_path")"
+      done
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# doctor
+# ---------------------------------------------------------------------------
+
+cmd_doctor() {
+  local _errors _warnings _n _lt _links _copies _skill _kind _mode _path _ver _detected _a _row
+  _errors=0
+  _warnings=0
+
+  say "${C_BOLD}awesome-skills doctor${C_RESET}"
+  say ""
+
+  # Repository
+  if [ -f "$ROOT/skills/handoff/SKILL.md" ] || [ -d "$ROOT/skills" ]; then
+    _n=$(discover_skills | wc -l | tr -d ' ')
+    if [ "$_n" -gt 0 ]; then
+      ok "repository: $_n skill(s)"
+    else
+      warn "repository: no skills found"
+      _warnings=$((_warnings + 1))
+    fi
+  else
+    warn "repository: skills/ missing"
+    _errors=$((_errors + 1))
+  fi
+
+  # Frontmatter, when Python is available.
+  if ! command -v python3 >/dev/null 2>&1; then
+    info "frontmatter: skipped (python3 not available; install-only is unaffected)"
+  elif [ ! -f "$ROOT/scripts/validate.py" ]; then
+    info "frontmatter: skipped (scripts/validate.py missing)"
+  elif python3 "$ROOT/scripts/validate.py" --quiet >/dev/null 2>&1; then
+    ok "frontmatter: valid"
+  else
+    warn "frontmatter: validation failed (run: python3 scripts/validate.py)"
+    _warnings=$((_warnings + 1))
+  fi
+
+  # Symlink support
+  _lt=$TMP_ROOT/linktest
+  mkdir -p "$_lt/a"
+  if ln -s "$_lt/a" "$_lt/b" 2>/dev/null && [ -L "$_lt/b" ]; then
+    ok "symlinks: supported (mode=link)"
+  else
+    warn "symlinks: not supported here; use --copy"
+    _warnings=$((_warnings + 1))
+  fi
+
+  # Manifest
+  if [ -f "$MANIFEST" ]; then
+    _links=$(grep -c '^[^#].*	mirror	link	' "$MANIFEST" 2>/dev/null || true)
+    _copies=$(grep -c '^[^#].*	mirror	copy	' "$MANIFEST" 2>/dev/null || true)
+    ok "manifest: $(pretty "$MANIFEST")"
+    info "  mirrors: ${_links:-0} link(s), ${_copies:-0} copy/copies"
+  else
+    info "manifest: no install recorded for the $SCOPE scope"
+  fi
+
+  # Broken links / conflicts recorded in the manifest
+  if [ -f "$MANIFEST" ]; then
+    while IFS='	' read -r _skill _kind _mode _path _ver; do
+      case $_skill in '#'*|'') continue ;; esac
+      if [ ! -e "$_path" ] && [ ! -L "$_path" ]; then
+        warn "missing: $(pretty "$_path")"
+        _warnings=$((_warnings + 1))
+      elif [ -L "$_path" ] && [ ! -e "$_path" ]; then
+        warn "broken symlink: $(pretty "$_path")"
+        _warnings=$((_warnings + 1))
+      elif ! is_owned_path "$_path"; then
+        warn "unmanaged: $(pretty "$_path")"
+        _warnings=$((_warnings + 1))
+      fi
+    done <"$MANIFEST"
+  fi
+
+  # Detected agents
+  _detected=
+  while IFS= read -r _row; do
+    case $_row in '#'*|'') continue ;; esac
+    if tool_detected "$(tool_field "$_row" 4)"; then
+      _a=$(tool_field "$_row" 1)
+      case " $_detected " in
+        *" $_a "*) ;;
+        *) _detected="$_detected $_a" ;;
+      esac
+    fi
+  done <"$AGENTS"
+  if [ -n "$_detected" ]; then
+    ok "detected agents:${_detected}"
+  else
+    info "detected agents: none"
+  fi
+
+  say ""
+  if [ "$_errors" -gt 0 ]; then
+    printf '%s✗ %d error(s), %d warning(s)%s\n' "$C_ERR" "$_errors" "$_warnings" "$C_RESET"
+    exit 1
+  fi
+  printf '%s✓ no errors, %d warning(s)%s\n' "$C_OK" "$_warnings" "$C_RESET"
+}
+
+# ---------------------------------------------------------------------------
+# tools
+# ---------------------------------------------------------------------------
+
+cmd_tools() {
+  local _a _row _old_ifs
+  say "${C_BOLD}Supported tools${C_RESET} (source: lib/agents.tsv)"
+  say ""
+  printf '%-18s %-28s %-44s %s\n' "ALIAS" "PROJECT" "GLOBAL" "DETECTED"
+  printf '%-18s %-28s %-44s %s\n' "-----" "-------" "------" "--------"
+
+  if [ -n "$TOOLS" ] && [ "$TOOLS" != "auto" ]; then
+    _old_ifs=$IFS
+    IFS=','
+    for _a in $TOOLS; do
+      IFS=$_old_ifs
+      _a=$(printf '%s' "$_a" | tr -d ' ')
+      _row=$(tool_row "$_a")
+      [ -n "$_row" ] || {
+        IFS=','
+        continue
+      }
+      _print_tool_row "$_row"
+      IFS=','
+    done
+    IFS=$_old_ifs
+    return 0
+  fi
+
+  while IFS= read -r _row; do
+    case $_row in '#'*|'') continue ;; esac
+    if [ "$TOOLS" = "auto" ] && ! tool_detected "$(tool_field "$_row" 4)"; then
+      continue
+    fi
+    _print_tool_row "$_row"
+  done <"$AGENTS"
+}
+
+_print_tool_row() {
+  local _row _a _p _g _d
+  _row=$1
+  _a=$(tool_field "$_row" 1)
+  _p=$(tool_field "$_row" 2)
+  _g=$(tool_field "$_row" 3)
+  if tool_detected "$(tool_field "$_row" 4)"; then
+    _d="yes"
+  else
+    _d="-"
+  fi
+  printf '%-18s %-28s %-44s %s\n' "$_a" "$_p" "$_g" "$_d"
+}
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
+
+[ -f "$AGENTS" ] || die "agent table missing: $AGENTS"
+
+CMD=install
+if [ $# -gt 0 ]; then
+  case $1 in
+    install|uninstall|list|doctor|tools)
+      CMD=$1
+      shift
+      ;;
+    help|-h|--help)
+      usage
+      exit 0
+      ;;
+    version|-V|--version)
+      printf '%s\n' "$VERSION"
+      exit 0
+      ;;
+    -*)
+      ;;
+    *)
+      die "unknown command: $1 (try --help)"
+      ;;
+  esac
+fi
+
+parse_args "$@"
+setup_scope
+
+case $CMD in
+  install) cmd_install ;;
+  uninstall) cmd_uninstall ;;
+  list) cmd_list ;;
+  doctor) cmd_doctor ;;
+  tools) cmd_tools ;;
+  *) die "unknown command: $CMD" ;;
+esac

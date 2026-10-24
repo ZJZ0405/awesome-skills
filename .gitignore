@@ -1,0 +1,19 @@
+# Build output
+dist/
+*.tar.gz
+*.zip
+*.sha256
+
+# Local installs performed inside the repo
+.agents/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc

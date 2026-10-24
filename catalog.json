@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "skills": [
+    {
+      "name": "handoff",
+      "description": "Write a compact, source-linked handoff note so another session, agent, or machine can resume the work without re-reading the whole conversation. Use when the user says handoff, 交接, 换会话, 继续做, resume later, or when a long session is ending.",
+      "path": "skills/handoff",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "shell-review",
+      "description": "Review shell scripts for destructive commands, quoting and portability bugs, and offline-install safety before running or shipping them. Use when the user asks to review, harden, or debug a .sh script, an installer, a Makefile shell block, or a command containing rm -rf, curl | sh, sudo, or eval.",
+      "path": "skills/shell-review",
+      "version": "1.0.0",
+      "license": "MIT"
+    }
+  ]
+}

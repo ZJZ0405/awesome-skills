@@ -1,0 +1,43 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          sh -n bin/awesome-skills
+          sh -n install.sh
+          sh -n scripts/pack.sh
+          sh -n tests/test-install.sh
+          sh -n skills/shell-review/scripts/scan.sh
+
+      - name: Installer tests
+        run: sh tests/test-install.sh
+
+      - name: Validate skills
+        run: python3 scripts/validate.py --strict
+
+      - name: Generated files are up to date
+        run: python3 scripts/catalog.py --check
+
+      - name: Scanner smoke test
+        run: |
+          printf '#!/bin/sh\nrm -rf /tmp/definitely-wrong\n' > "$RUNNER_TEMP/bad.sh"
+          if sh skills/shell-review/scripts/scan.sh "$RUNNER_TEMP/bad.sh"; then
+            echo "::error::scanner did not flag a destructive script"
+            exit 1
+          fi

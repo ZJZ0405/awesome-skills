@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "skills": {
+    "handoff": {
+      "source": "original",
+      "license": "MIT"
+    },
+    "shell-review": {
+      "source": "original",
+      "license": "MIT"
+    }
+  }
+}
