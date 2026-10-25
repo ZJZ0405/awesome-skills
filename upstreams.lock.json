@@ -83,7 +83,7 @@
             "assets/JetBrainsMono-OFL.txt": "c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90",
             "assets/template.html": "4fe243de7448f83d2123e987db5ec2539b662480a6e3ce3c90deb9e0c9ad11ef",
             "bin/archify.mjs": "3cebcee3fa339e3b98deacae8cb9a5570525e003d8823368d304d904ba9ceecd",
-            "bin/delivery-update.mjs": "24d92f908d91ece10ddcefe979f7950f9250023813c41777022ae5d948aa8e2c",
+            "bin/delivery-update.mjs": "1b018f34a08226869056ce05e0b77fded12d47935d6c706ee839266e12911b8b",
             "bin/finalize.mjs": "766e053afaeaca8045b8a0558f50cb6b685dfe21cb9d00e7776d407d6db364e8",
             "bin/open-artifact.mjs": "b0ab5f37c4f4556f76040dc862744afe9d4b65f319f35e1f9b505e0344b9c409",
             "bin/preview.mjs": "95bdc09c7ea2679f137bf1bf4248cdb401a54da979ff4a16d518caafeae0070d",

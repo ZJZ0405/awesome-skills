@@ -9,6 +9,7 @@ Run: python3 tests/test_sync.py
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -221,6 +222,68 @@ class SyncTest(unittest.TestCase):
             source["source"],
             "https://github.com/acme/skills/tree/%s/skills/alpha" % commit,
         )
+
+    def test_local_patch_is_applied_and_locked(self):
+        self.make_repo(
+            "acme/skills",
+            {
+                "LICENSE": LICENSE_MIT,
+                "skills/demo/SKILL.md": skill_md("demo"),
+                "skills/demo/scripts/run.sh": "#!/bin/sh\necho online\n",
+            },
+        )
+        patch = (
+            "--- a/scripts/run.sh\n"
+            "+++ b/scripts/run.sh\n"
+            "@@ -1,2 +1,2 @@\n"
+            " #!/bin/sh\n"
+            "-echo online\n"
+            "+echo offline\n"
+        )
+        patch_path = self.root / "patches" / "demo" / "0001-offline.patch"
+        patch_path.parent.mkdir(parents=True, exist_ok=True)
+        patch_path.write_text(patch, encoding="utf-8")
+
+        self.set_config([self.base_upstream(["demo"])])
+        self.assert_ok(self.sync())
+
+        run = self.skill_dir("demo") / "scripts" / "run.sh"
+        self.assertEqual(run.read_text(encoding="utf-8"), "#!/bin/sh\necho offline\n")
+        files = self.lock()["upstreams"]["acme"]["skills"]["demo"]["files"]
+        self.assertEqual(
+            files["scripts/run.sh"], hashlib.sha256(run.read_bytes()).hexdigest()
+        )
+
+        again = self.sync()
+        self.assert_ok(again)
+        self.assertIn("0 added, 0 updated, 1 unchanged", again.stdout)
+
+    def test_patch_that_does_not_apply_skips_the_skill(self):
+        self.make_repo(
+            "acme/skills",
+            {
+                "LICENSE": LICENSE_MIT,
+                "skills/demo/SKILL.md": skill_md("demo"),
+                "skills/demo/scripts/run.sh": "#!/bin/sh\necho online\n",
+            },
+        )
+        patch = (
+            "--- a/scripts/run.sh\n"
+            "+++ b/scripts/run.sh\n"
+            "@@ -1,2 +1,2 @@\n"
+            " #!/bin/sh\n"
+            "-echo something-else\n"
+            "+echo offline\n"
+        )
+        patch_path = self.root / "patches" / "demo" / "0001-stale.patch"
+        patch_path.parent.mkdir(parents=True, exist_ok=True)
+        patch_path.write_text(patch, encoding="utf-8")
+
+        self.set_config([self.base_upstream(["demo"])])
+        proc = self.sync()
+        self.assert_ok(proc)
+        self.assertIn("does not apply", proc.stdout)
+        self.assertFalse(self.skill_dir("demo").exists())
 
     def test_exclude_paths_are_not_vendored(self):
         self.make_repo(

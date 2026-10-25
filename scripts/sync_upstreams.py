@@ -1043,7 +1043,26 @@ def normalize_text_files(staged):
         path.write_bytes(data.replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
 
 
-def prepare_skill(candidate, expected_license, license_source, notice_sources, old, commit, stage_root, report):
+def patches_for(root, name):
+    """Local patches for one skill, applied in filename order after the copy."""
+    directory = Path(root) / "patches" / name
+    if not directory.is_dir():
+        return []
+    return sorted(p for p in directory.rglob("*.patch") if p.is_file())
+
+
+def apply_patches(staged, patches):
+    for patch in patches:
+        try:
+            run_git(
+                ["apply", "-p1", "--whitespace=nowarn", str(patch.resolve())],
+                cwd=staged,
+            )
+        except SyncError as exc:
+            raise SkipSkill("patch %s does not apply: %s" % (patch.name, exc))
+
+
+def prepare_skill(candidate, expected_license, license_source, notice_sources, old, commit, stage_root, report, patches=()):
     staged = Path(stage_root) / candidate.upstream.id / candidate.name
     staged.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -1059,6 +1078,7 @@ def prepare_skill(candidate, expected_license, license_source, notice_sources, o
             if notice.is_file() and not notice.is_symlink():
                 if not is_inside(notice, candidate.path):
                     copy_license(notice, staged / notice.name)
+        apply_patches(staged, patches)
         normalize_text_files(staged)
         md = staged / "SKILL.md"
         try:
@@ -1663,6 +1683,7 @@ def run_sync(args, root, config, lock, sources, report):
                     commit,
                     work / "stage",
                     report,
+                    patches_for(root, name),
                 )
                 plans.append(plan)
                 forced_drift = old is not None and name in drift and args.force

@@ -68,6 +68,8 @@ Reviewed third-party skill: add the repository to `upstreams.json`, put the skil
 in its `include` list, then run `python3 scripts/sync_upstreams.py --upstream
 <id>`. It writes `skills/<name>/`, `upstreams.lock.json` and `sources.json`.
 Never edit a vendored skill by hand — copy it to a new name and remove it from
-`include` if you need a local variant.
+`include` if you need a local variant. For a one-line behaviour change, add a
+unified diff under `patches/<skill>/` instead; the sync applies it before hashing,
+so the lock stays consistent and drift is not reported.
 
 Do not commit generated `dist/` output or local `.agents/` installs.

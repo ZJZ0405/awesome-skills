@@ -49,7 +49,8 @@ function normalize(result) {
 export function startDeliveryUpdateCheck({
   env = process.env, deadlineMs = DEADLINE_MS, checkerPath = childPath,
 } = {}) {
-  if (env.ARCHIFY_UPDATE_CHECK_DISABLED === '1') return Promise.resolve(unavailable('disabled'));
+  // Offline build: update checks are opt-in (ARCHIFY_UPDATE_CHECK_ENABLED=1).
+  if (env.ARCHIFY_UPDATE_CHECK_ENABLED !== '1') return Promise.resolve(unavailable('disabled'));
   return new Promise((resolve) => {
     let child;
     try {

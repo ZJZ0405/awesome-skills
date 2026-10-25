@@ -387,7 +387,17 @@ disabled 的 upstream 仍参与 `--prune`；未改动的技能和 lock/sources �
 **完全移除**：先从配置删条目，再 `--prune`；脚本会把 lock 里孤立的 upstream
 记录也当作 orphan 处理。
 
-**本地定制**：复制成新目录和新 `name`，移出 `include`，不要改 vendored 目录。
+**本地定制**：默认复制成新目录和新 `name`，移出 `include`，不要改 vendored 目录。
+如果只是一两行的行为改动（例如关掉一个默认联网的检查），用补丁：
+
+```text
+patches/<skill>/0001-<what>.patch    # 统一 diff，路径相对技能根目录
+```
+
+`sync_upstreams.py` 在拷贝上游之后、计算 lock 哈希之前用 `git apply -p1` 应用补丁，
+所以 lock 记录的是打完补丁的内容，`--check` 和 drift 闸门都不会误报。补丁打不上
+（上游改了那段代码）时该技能会被跳过并在报告里写明原因，不会写入半成品；这时更新
+补丁再跑一次同步即可。补丁文件进 git，和技能一起审阅。
 
 ## 10. 当前状态
 
@@ -480,7 +490,8 @@ CI 在 Ubuntu/macOS 上都会跑这套测试。
 ## 12. 维护约定
 
 - 每周看一次 sync PR：许可证、`scripts/`、diff 大小；没问题再 merge。
-- vendored 技能视为只读；要定制就 fork 成新名字，并移出 `include`。
+- vendored 技能视为只读；要定制就 fork 成新名字并移出 `include`，一两行的行为
+  改动走 `patches/<skill>/`（见第 9 节）。
 - `upstreams.lock.json` 必须提交；`sources.json` 的 `source` 用 URL，不写本机
   绝对路径。
 - 定时任务只读默认分支；改完 `upstreams.json` 要先 merge 到 `main`，或者本地
