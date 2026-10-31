@@ -21,6 +21,7 @@ jobs:
         run: |
           python3 scripts/validate.py --strict
           python3 scripts/catalog.py --check
+          PYTHONPATH=installer/src python3 -m unittest discover -s installer/tests
 
       - name: Build offline bundle
         run: sh scripts/pack.sh --zip

@@ -1,0 +1,37 @@
+#!/bin/sh
+# Launcher for the optional Python installer, runnable straight from a
+# checkout or from the offline bundle. The primary installer remains
+# bin/awesome-skills; this one needs Python 3.9+.
+#
+#   installer/bin/awesome-skills-py install --tool auto
+#
+# https://github.com/ZJZ0405/awesome-skills
+
+set -eu
+
+_self=$0
+case $_self in
+  */*) ;;
+  *) _self=$(command -v "$_self" 2>/dev/null || printf '%s\n' "$_self") ;;
+esac
+
+while [ -L "$_self" ]; do
+  _dir=$(CDPATH= cd -- "$(dirname -- "$_self")" && pwd -P)
+  _link=$(readlink "$_self")
+  case $_link in
+    /*) _self=$_link ;;
+    *) _self=$_dir/$_link ;;
+  esac
+done
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$_self")/.." && pwd -P)
+
+if ! command -v python3 >/dev/null 2>&1; then
+  printf 'error: python3 not found; this optional installer needs Python 3.9+\n' >&2
+  printf 'use ../bin/awesome-skills for the dependency-free installer\n' >&2
+  exit 1
+fi
+
+PYTHONPATH=$ROOT/src${PYTHONPATH:+:$PYTHONPATH}
+export PYTHONPATH
+exec python3 -m awesome_skills "$@"

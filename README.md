@@ -61,6 +61,24 @@ cd awesome-skills-0.1.1
 ./bin/awesome-skills uninstall --tool cursor  # 只移除某个工具的镜像
 ```
 
+### 可选：Python 安装器
+
+`installer/` 是同一套安装模型的 Python 版（3.9+，标准库，不联网）：幂等判断按
+内容哈希，`check` 逐条报漂移，卸载会保护与其他工具共用的目录。主安装器不变，
+两者可以共存。
+
+```sh
+./installer/bin/awesome-skills-py                  # 交互向导
+./installer/bin/awesome-skills-py install --tool auto
+./installer/bin/awesome-skills-py check
+./installer/bin/awesome-skills-py uninstall --all
+```
+
+直接运行（或 `install` 不带 `--tool`/`--skill`）会进入 codegraph 风格的交互向导：
+`┌ │ └` 引导栏、`◆`/`◇` 步骤符、方向键多选（第一页 10 个常用 agent）、Tab 路径补全、
+项目目录预填当前目录、计划 note 框和 `└ Done` 收尾。
+脚本/CI 用 `-y` 跳过提示。设计与取舍见 [docs/python-installer.md](docs/python-installer.md)。
+
 ## 安装到哪些工具
 
 安装器内置 80 个工具别名，覆盖 Claude Code、Codex、Cursor、Gemini CLI、GitHub
@@ -134,6 +152,10 @@ Copilot、OpenCode、Cline、Windsurf、Zed、Amp、Kimi Code CLI、Warp、DSH �
 awesome-skills/
 ├── install.sh                 # 入口：install 包装器
 ├── bin/awesome-skills         # 安装/卸载/列表/自检 CLI（POSIX sh）
+├── installer/                 # 可选 Python 安装器（stdlib）
+│   ├── bin/awesome-skills-py  # 启动器
+│   ├── src/awesome_skills/    # registry / types / state / skills / CLI
+│   └── tests/test_core.py     # 测试（含真实 80 行表的契约）
 ├── lib/agents.tsv             # 工具别名 → 项目/全局路径（唯一数据源）
 ├── skills/                    # 你的收藏：每个技能一个目录
 │   └── <name>/
@@ -239,7 +261,8 @@ git pull && ./install.sh --tool auto
 - 校验包完整性：
   - Linux：`sha256sum -c awesome-skills-0.1.1.tar.gz.sha256`
   - macOS：`shasum -a 256 -c awesome-skills-0.1.1.tar.gz.sha256`
-- 没有 Python 也能安装；Python 3 只在**维护仓库**（校验/生成目录/导入）时需要。
+- 没有 Python 也能安装；Python 3 只在**维护仓库**（校验/生成目录/导入）和**可选的
+  Python 安装器**（`installer/`）时需要。
 
 更细的搬运流程见 [docs/offline.md](docs/offline.md)。
 

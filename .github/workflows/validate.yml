@@ -23,13 +23,17 @@ jobs:
           sh -n install.sh
           sh -n scripts/pack.sh
           sh -n tests/test-install.sh
+          sh -n installer/bin/awesome-skills-py
           sh -n skills/shell-review/scripts/scan.sh
 
       - name: Installer tests
         run: sh tests/test-install.sh
 
       - name: Python syntax
-        run: python3 -m py_compile scripts/*.py tests/test_sync.py
+        run: python3 -m py_compile scripts/*.py tests/test_sync.py installer/src/awesome_skills/*.py
+
+      - name: Python installer tests
+        run: PYTHONPATH=installer/src python3 -m unittest discover -s installer/tests
 
       - name: Upstream sync tests
         run: python3 tests/test_sync.py

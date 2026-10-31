@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "awesome-skills-installer"
+version = "0.1.0"
+description = "Optional Python installer for the awesome-skills collection: shared hub, per-agent mirrors, state manifest, drift checks."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+awesome-skills-py = "awesome_skills.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -3,6 +3,9 @@
 目标：在**没有网络、没有 Node、没有 Python** 的机器上，把仓库里的技能装进
 Claude Code、Codex、Cursor、Gemini CLI、Copilot、OpenCode 等 agent。
 
+`installer/` 里的 Python 安装器是可选实现（需要 Python 3.9+）；本文的主流程
+只使用零依赖的 `bin/awesome-skills`。
+
 ## 1. 在联网机器上打包
 
 ```sh
@@ -146,7 +149,7 @@ hub 中的技能会被替换，软链保持不动；清单按“技能 + 路径�
 | `refusing to overwrite` | 同名目录已存在且不是本工具装的 | 先确认内容，再 `--force`（会备份）或手动改名 |
 | `symlinks: not supported` | 文件系统/权限不支持软链 | 改用 `--copy` |
 | 权限错误 | 目标目录属于 root | 不要用 sudo 装进系统目录，回到用户目录 |
-| `python3 not found` | 只在维护脚本需要 | 安装和卸载不需要 Python |
+| `python3 not found` | 维护脚本或可选的 `installer/` 需要 | 主安装/卸载不需要 Python；直接用 `./bin/awesome-skills` |
 | 移动了 HOME 后软链断了 | 镜像使用绝对路径 | 重新运行 `./install.sh --tool auto` |
 | 校验失败 | 传输过程改写了文件 | 用 U 盘/scp 重传，不要用聊天软件转发 |
 

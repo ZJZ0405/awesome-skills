@@ -2,6 +2,8 @@
 
 This repository is a **portable collection of Agent Skills** plus a POSIX
 installer that copies them into the skill directories of ~80 coding agents.
+`installer/` holds an optional Python port of the installer architecture; it
+never replaces or slows down the shell path.
 
 ## Layout
 
@@ -14,14 +16,19 @@ installer that copies them into the skill directories of ~80 coding agents.
   Columns: `alias`, `project`, `global`, `detect` (`;`-separated, `cmd:` prefix
   means "binary on PATH").
 - `bin/awesome-skills` — installer CLI. POSIX sh. Do not add Bash 4 features.
+- `installer/` — optional Python installer (3.9+, stdlib only): registry from
+  `lib/agents.tsv`, shared hub, state manifest, drift checks, and a clack-style TTY guide.
+  Launcher: `installer/bin/awesome-skills-py`. Design: `docs/python-installer.md`.
 - `scripts/` — maintainer tooling. Python 3 standard library only.
 - `tests/test-install.sh` — installer regression tests; runs against a temp HOME.
+- `installer/tests/test_core.py` — Python installer tests; temp HOME + fixture repo.
 - `tests/test_sync.py` — upstream sync tests; local `file://` git fixtures, offline.
 
 ## Commands
 
 ```sh
 sh tests/test-install.sh          # full installer test suite
+PYTHONPATH=installer/src python3 -m unittest discover -s installer/tests  # Python installer
 python3 tests/test_sync.py        # upstream sync tests
 python3 scripts/validate.py       # frontmatter, links, hygiene
 python3 scripts/catalog.py        # regenerate README table + catalog.json + docs/tools.md
@@ -33,13 +40,20 @@ sh -n bin/awesome-skills          # syntax check
 ```
 
 Run `sh tests/test-install.sh` after any change to `bin/awesome-skills`,
-`lib/agents.tsv`, or `install.sh`. Run `python3 tests/test_sync.py` after touching
+`lib/agents.tsv`, or `install.sh`. Run the Python installer tests after touching
+`installer/` or `lib/agents.tsv`. Run `python3 tests/test_sync.py` after touching
 `scripts/sync_upstreams.py`, `upstreams.json`, or the lock format.
 
 ## Conventions
 
 - **Installer must stay dependency-free**: no Node, no Python, no network, no
-  `bash`-only syntax. It must run on an air-gapped macOS/Linux machine.
+  `bash`-only syntax. It must run on an air-gapped macOS/Linux machine. This
+  applies to `bin/awesome-skills` and `install.sh`; `installer/` is the optional
+  Python 3.9+ stdlib port and must never be required by them.
+- **Shared installer behaviour**: keep `installer/` compatible with
+  `lib/agents.tsv`, the hub layout, and the shell installer's
+  `manifest.tsv`/marker conventions. Destructive changes need tests in both
+  suites when they touch shared paths.
 - **Never delete unowned paths.** New destructive behaviour needs a test.
 - **Skills are portable**: frontmatter limited to `name`, `description`,
   `license`, `allowed-tools`, `metadata`, `version`. Avoid agent-specific keys
