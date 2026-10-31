@@ -24,16 +24,16 @@ git clone git@github.com:ZJZ0405/awesome-skills.git
 # 没有 SSH key 时：git clone https://github.com/ZJZ0405/awesome-skills.git
 cd awesome-skills
 ./scripts/pack.sh
-# dist/awesome-skills-0.1.1.tar.gz
-# dist/awesome-skills-0.1.1.tar.gz.sha256
+# dist/awesome-skills-0.2.0.tar.gz
+# dist/awesome-skills-0.2.0.tar.gz.sha256
 ```
 
 把这两个文件拷到离线机器，然后：
 
 ```sh
-shasum -a 256 -c awesome-skills-0.1.1.tar.gz.sha256   # Linux 用 sha256sum -c
-tar xzf awesome-skills-0.1.1.tar.gz
-cd awesome-skills-0.1.1
+shasum -a 256 -c awesome-skills-0.2.0.tar.gz.sha256   # Linux 用 sha256sum -c
+tar xzf awesome-skills-0.2.0.tar.gz
+cd awesome-skills-0.2.0
 ./install.sh --tool auto
 ```
 
@@ -259,8 +259,8 @@ git pull && ./install.sh --tool auto
 - 支持 macOS、Linux、WSL、Git Bash。Git Bash/MSYS 下会自动改用 `--copy`。
 - 文件系统不支持软链时，先 `./bin/awesome-skills doctor` 看提示，再用 `--copy`。
 - 校验包完整性：
-  - Linux：`sha256sum -c awesome-skills-0.1.1.tar.gz.sha256`
-  - macOS：`shasum -a 256 -c awesome-skills-0.1.1.tar.gz.sha256`
+  - Linux：`sha256sum -c awesome-skills-0.2.0.tar.gz.sha256`
+  - macOS：`shasum -a 256 -c awesome-skills-0.2.0.tar.gz.sha256`
 - 没有 Python 也能安装；Python 3 只在**维护仓库**（校验/生成目录/导入）和**可选的
   Python 安装器**（`installer/`）时需要。
 

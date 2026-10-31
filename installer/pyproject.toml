@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "awesome-skills-installer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Optional Python installer for the awesome-skills collection: shared hub, per-agent mirrors, state manifest, drift checks."
 readme = "README.md"
 requires-python = ">=3.9"

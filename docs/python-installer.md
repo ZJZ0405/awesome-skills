@@ -103,7 +103,7 @@ shell 安装器从不提问，`auto` 是脚本和 CI 的安全默认。Python �
 两种入口等价：直接运行 `awesome-skills-py`，或 `install` 不带选择参数。
 
 ```text
-┌  awesome-skills v0.1.0
+┌  awesome-skills v0.2.0
 │
 ◆  Apply skills to all your projects, or just this one?
 │  ● All projects (~/.agents/skills)
@@ -214,14 +214,14 @@ shell 安装器从不提问，`auto` 是脚本和 CI 的安全默认。Python �
     "hub": {
       "handoff": {
         "mode": "copy",
-        "version": "0.1.1",
+        "version": "0.2.0",
         "path": "/home/me/.agents/skills/handoff"
       }
     },
     "claude-code": {
       "handoff": {
         "mode": "link",
-        "version": "0.1.1",
+        "version": "0.2.0",
         "path": "/home/me/.claude/skills/handoff"
       }
     }

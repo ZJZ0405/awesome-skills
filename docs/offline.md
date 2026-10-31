@@ -18,8 +18,8 @@ git log -1 --oneline          # 记下版本，方便回滚
 产物：
 
 ```text
-dist/awesome-skills-0.1.1.tar.gz
-dist/awesome-skills-0.1.1.tar.gz.sha256
+dist/awesome-skills-0.2.0.tar.gz
+dist/awesome-skills-0.2.0.tar.gz.sha256
 ```
 
 `pack.sh` 会排除 `.git`、`dist/`、缓存和本机 `.agents/`，不会把开发环境带过去。
@@ -36,17 +36,17 @@ U 盘或 `scp`。
 Linux：
 
 ```sh
-sha256sum -c awesome-skills-0.1.1.tar.gz.sha256
-tar xzf awesome-skills-0.1.1.tar.gz
-cd awesome-skills-0.1.1
+sha256sum -c awesome-skills-0.2.0.tar.gz.sha256
+tar xzf awesome-skills-0.2.0.tar.gz
+cd awesome-skills-0.2.0
 ```
 
 macOS：
 
 ```sh
-shasum -a 256 -c awesome-skills-0.1.1.tar.gz.sha256
-tar xzf awesome-skills-0.1.1.tar.gz
-cd awesome-skills-0.1.1
+shasum -a 256 -c awesome-skills-0.2.0.tar.gz.sha256
+tar xzf awesome-skills-0.2.0.tar.gz
+cd awesome-skills-0.2.0
 ```
 
 没有 `sha256sum`/`shasum` 时，至少确认文件大小与来源，并在可信介质上传输。
