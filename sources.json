@@ -30,10 +30,10 @@
       ]
     },
     "frontend-design": {
-      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/frontend-design",
+      "source": "https://github.com/anthropics/skills/tree/e4bb5d960d87126ff3b3a8af1a104b7db67560ba/skills/frontend-design",
       "license": "Apache-2.0",
       "upstream": "anthropic",
-      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "path": "skills/frontend-design"
     },
     "handoff": {
@@ -64,24 +64,24 @@
       ]
     },
     "mcp-builder": {
-      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/mcp-builder",
+      "source": "https://github.com/anthropics/skills/tree/e4bb5d960d87126ff3b3a8af1a104b7db67560ba/skills/mcp-builder",
       "license": "Apache-2.0",
       "upstream": "anthropic",
-      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "path": "skills/mcp-builder"
     },
     "nature-reader": {
-      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6ae86c742705fd968b13c79db1a8518a84089d4/skills/nature-reader",
+      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6701dbea29afa7c596d029b957b7edc92130ea5/skills/nature-reader",
       "license": "Apache-2.0",
       "upstream": "nature",
-      "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
+      "commit": "c6701dbea29afa7c596d029b957b7edc92130ea5",
       "path": "skills/nature-reader"
     },
     "nature-shared": {
-      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6ae86c742705fd968b13c79db1a8518a84089d4/skills/nature-shared",
+      "source": "https://github.com/Yuan1z0825/nature-skills/tree/c6701dbea29afa7c596d029b957b7edc92130ea5/skills/nature-shared",
       "license": "Apache-2.0",
       "upstream": "nature",
-      "commit": "c6ae86c742705fd968b13c79db1a8518a84089d4",
+      "commit": "c6701dbea29afa7c596d029b957b7edc92130ea5",
       "path": "skills/nature-shared"
     },
     "results-analysis": {
@@ -111,10 +111,10 @@
       "license": "MIT"
     },
     "skill-creator": {
-      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/skill-creator",
+      "source": "https://github.com/anthropics/skills/tree/e4bb5d960d87126ff3b3a8af1a104b7db67560ba/skills/skill-creator",
       "license": "Apache-2.0",
       "upstream": "anthropic",
-      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "path": "skills/skill-creator"
     },
     "statistical-analysis": {
@@ -141,10 +141,10 @@
       ]
     },
     "webapp-testing": {
-      "source": "https://github.com/anthropics/skills/tree/dbd4588f9e1033efb41dad4bef2f7947c8993d44/skills/webapp-testing",
+      "source": "https://github.com/anthropics/skills/tree/e4bb5d960d87126ff3b3a8af1a104b7db67560ba/skills/webapp-testing",
       "license": "Apache-2.0",
       "upstream": "anthropic",
-      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "path": "skills/webapp-testing"
     }
   }
